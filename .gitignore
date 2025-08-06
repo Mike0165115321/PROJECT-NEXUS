@@ -1,16 +1,59 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[codz]
-*$py.class
+# ===================================================================
+# 🤫 ข้อมูลลับและการตั้งค่าส่วนตัว (Secrets & Personal Settings)
+# ไฟล์เหล่านี้ห้าม commit ขึ้น Git เด็ดขาด เพราะมีข้อมูลที่ละเอียดอ่อน
+# ===================================================================
+.env
+.env.local
+.envrc
+local_settings.py
+.pypirc
 
-# C extensions
-*.so
 
-# Distribution / packaging
-.Python
+# ===================================================================
+# 🧠 ข้อมูลเฉพาะของโปรเจกต์ (Project-Specific Data)
+# ข้อมูลที่ถูกสร้างขึ้นระหว่างรันโปรแกรมและไม่ควรอยู่ใน Version Control
+# ===================================================================
+
+# ไฟล์ข้อมูลที่สร้างขึ้นระหว่างการรันโปรแกรม
+data/books/
+data/index/
+data/memory_index/
+data/news_index/
+data/memory.db
+data/temp/
+data/embedding_cache.json
+
+# ยกเว้นไฟล์ .gitkeep เพื่อให้โฟลเดอร์ data/ ที่ว่างเปล่าสามารถ commit ได้
+!data/.gitkeep
+
+# Knowledge Graph และ Workspace
+neo4j-data/
+sandbox_workspace/
+
+
+# ===================================================================
+# 📦 สภาพแวดล้อมเสมือนและ Dependencies (Virtual Environments)
+# โฟลเดอร์ที่เก็บ Library ของ Python ไม่ควรถูก commit
+# ===================================================================
+.myenv/
+myenv/
+.venv
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.pixi/
+__pypackages__/
+
+
+# ===================================================================
+# ⚙️ ไฟล์ Build, Distribution และ Packaging
+# ไฟล์ที่เกิดจากการสร้าง Package หรือ Distribution
+# ===================================================================
 build/
-develop-eggs/
 dist/
+develop-eggs/
 downloads/
 eggs/
 .eggs/
@@ -21,51 +64,96 @@ sdist/
 var/
 wheels/
 share/python-wheels/
-*.egg-info/
 .installed.cfg
+*.egg-info/
 *.egg
 MANIFEST
-
 # PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+# PDM
+.pdm-python
+.pdm-build/
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
 
-# Unit test / coverage reports
-htmlcov/
+# ===================================================================
+# 🖥️ ไฟล์จาก IDE, Editor และ Linter (IDE, Editor & Linter Files)
+# การตั้งค่าส่วนตัวของโปรแกรมที่ใช้เขียนโค้ด
+# ===================================================================
+# Visual Studio Code
+.vscode/
+# JetBrains (PyCharm, etc.)
+.idea/
+# Spyder
+.spyderproject
+.spyproject
+# Rope
+.ropeproject
+# Abstra
+.abstra/
+# Cursor
+.cursorignore
+.cursorindexingignore
+
+
+# ===================================================================
+# 🧪 ไฟล์ทดสอบและ Coverage (Testing & Coverage Reports)
+# ผลลัพธ์จากการรันเทสและตรวจสอบโค้ด ไม่ใช่ส่วนหนึ่งของ Source Code
+# ===================================================================
 .tox/
 .nox/
+.pytest_cache/
 .coverage
 .coverage.*
-.cache
-nosetests.xml
-coverage.xml
 *.cover
 *.py.cover
+htmlcov/
+nosetests.xml
+coverage.xml
 .hypothesis/
-.pytest_cache/
 cover/
 
-# Translations
-*.mo
-*.pot
 
-# Django stuff:
+# ===================================================================
+# 📜 ไฟล์ชั่วคราว, Cache และ Byte-compiled
+# ไฟล์ที่ถูกสร้างขึ้นอัตโนมัติเพื่อเพิ่มความเร็วในการทำงาน
+# ===================================================================
+__pycache__/
+*.py[codz]
+*$py.class
+*.so
+.cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+cython_debug/
+# Jupyter Notebook
+.ipynb_checkpoints
+
+
+# ===================================================================
+# 📚 ไฟล์อื่นๆ ที่สร้างโดยระบบและเครื่องมือ (Other Generated Files)
+# ===================================================================
+# OS Generated Files
+.DS_Store
+
+# Logs
 *.log
-local_settings.py
-db.sqlite3
+pip-log.txt
+pip-delete-this-directory.txt
+celerybeat-schedule
+celerybeat.pid
+
+# Databases
+*.sqlite
+*.sqlite3
+*.db
 db.sqlite3-journal
 
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
+# Scrapy
 .scrapy
 
 # Sphinx documentation
@@ -75,131 +163,23 @@ docs/_build/
 .pybuilder/
 target/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
 # IPython
 profile_default/
 ipython_config.py
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
-
-# UV
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#uv.lock
-
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
-#poetry.toml
-
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
-#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
-#pdm.lock
-#pdm.toml
-.pdm-python
-.pdm-build/
-
-# pixi
-#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
-#pixi.lock
-#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
-#   in the .venv directory. It is recommended not to include this directory in version control.
-.pixi
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
+# SageMath
 *.sage.py
-
-# Environments
-.env
-.envrc
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
 
 # mkdocs documentation
 /site
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+# Translations
+*.mo
+*.pot
 
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
-
-# Abstra
-# Abstra is an AI-powered process automation framework.
-# Ignore directories containing user credentials, local state, and settings.
-# Learn more at https://abstra.io/docs
-.abstra/
-
-# Visual Studio Code
-#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
-#  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
-#  you could uncomment the following to ignore the entire vscode folder
-# .vscode/
-
-# Ruff stuff:
-.ruff_cache/
-
-# PyPI configuration file
-.pypirc
-
-# Cursor
-#  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
-#  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
-#  refer to https://docs.cursor.com/context/ignore-files
-.cursorignore
-.cursorindexingignore
+# Flask
+instance/
+.webassets-cache
 
 # Marimo
 marimo/_static/

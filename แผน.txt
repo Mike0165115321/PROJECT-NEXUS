@@ -1,0 +1,243 @@
+I. 🗺️ พิมพ์เขียวสถาปัตยกรรมเชิงโครงสร้าง (Structural Blueprint)
+Version: 4.0 (The Final Conductor Architecture)
+
+เอกสารฉบับนี้ได้รวบรวมพิมพ์เขียวทั้งหมดของ PROJECT NEXUS ตั้งแต่โครงสร้างไฟล์, สถาปัตยกรรมหลัก, ไปจนถึงการไหลของข้อมูลโดยละเอียดในส่วนที่สำคัญที่สุด ทำให้เห็นภาพรวมของระบบนิเวศ AI ที่มีความสามารถหลากหลายและทำงานร่วมกันอย่างเป็นระบบได้อย่างสมบูรณ์
+
+
+PROJECT_NEXUS/
+│
+├── .myenv/                      # 📦 สภาพแวดล้อมเสมือนของ Python
+│
+├── agents/                     # 🧠 ศูนย์บัญชาการ (The Agency): ที่รวมของผู้เชี่ยวชาญ (Agents)
+│   │
+│   ├── __init__.py
+│   ├── persona_core.py         # 🆔 บัตรประจำตัว "เฟิง": เก็บ Prompt บุคลิกภาพหลักที่ใช้ร่วมกัน
+│   ├── formatter_agent.py      # 🎨 บรรณาธิการใหญ่: จัดรูปแบบและขัดเกลาคำตอบสุดท้าย
+│   │
+│   ├── coder_mode/             #  - Faction: The Coders Guild
+│   │   ├── __init__.py
+│   │   ├── code_agent.py       # 📝 ที่ปรึกษาโค้ด: ให้คำแนะนำและเขียนโค้ดตัวอย่าง
+│   │   └── code_interpreter_agent.py # 🏃‍♂️ นักปฏิบัติการโค้ด: เขียนและรันโค้ดใน Sandbox
+│   │
+│   ├── consultant_mode/        #  - Faction: The Librarians
+│   │   ├── __init__.py
+│   │   └── librarian_agent.py  # 📚 บรรณารักษ์ผู้แนะนำ: ให้ข้อมูล Meta และแนะนำหนังสือ
+│   │
+│   ├── counseling_mode/        #  - Faction: The Empathic Counselors
+│   │   ├── __init__.py
+│   │   └── counselor_agent.py  # ❤️ สหายผู้เข้าอกเข้าใจ: สร้างพื้นที่ปลอดภัยและรับฟังปัญหาเชิงอารมณ์
+│   │
+│   ├── feng_mode/              #  - Faction: The Core Identity & Triage
+│   │   ├── __init__.py
+│   │   ├── feng_agent.py       # 🕵️ หน่วยคัดกรองอัจฉริยะ: แก้ไขคำผิด, วิเคราะห์เจตนา, และส่งต่อแฟ้มงาน
+│   │   ├── general_conversation_agent.py # 💬 สหายนักสนทนา: จัดการบทสนทนาทั่วไป
+│   │   └── proactive_offer_agent.py    # 🤔 ปราชญ์ผู้ร่วมไตร่ตรอง: ให้คำตอบเบื้องต้นและเสนอการวิเคราะห์ต่อ
+│   │
+│   ├── news_mode/              #  - Faction: The Journalists
+│   │   ├── __init__.py
+│   │   └── news_agent.py       # 📰 บรรณาธิการข่าวกรอง: สรุปข่าวสารล่าสุด
+│   │
+│   ├── storytelling_mode/      #  - Faction: The Listeners
+│   │   ├── __init__.py
+│   │   └── listener_agent.py   # 👂 ผู้รับฟังที่กระตือรือร้น: กระตุ้นให้ผู้ใช้เล่าเรื่องราวต่อ
+│   │
+│   └── utility_mode/           #  - Faction: The Support Crew
+│       ├── __init__.py
+│       ├── apology_agent.py    # 🛡️ ผู้จัดการสถานการณ์: ขอโทษและเสนอทางแก้ไขเมื่อเกิดข้อผิดพลาด
+│       ├── image_agent.py      # 🖼️ นักค้นหาทัศนศิลป์: ค้นหารูปภาพ
+│       ├── reporter_agent.py   # 🕰️ ผู้รายงานเวลา: บอกวันและเวลา
+│       └── system_agent.py     # ⚙️ ผู้ควบคุมระบบปฏิบัติการ: ควบคุม OS
+│
+├── core/                       # ⚙️ ห้องเครื่องยนต์ (The Engine Room): กลไกหลักของระบบ
+│   │
+│   ├── __init__.py
+│   ├── api_key_manager.py      # 🔑 ฝ่ายบุคคล (Google): จัดการคีย์ของ Gemini
+│   ├── groq_key_manager.py     # 🔑 ฝ่ายบุคคล (Groq): จัดการคีย์ของ Groq
+│   ├── code_executor.py        # ⚡️ เครื่องมือรันโค้ด
+│   ├── config.py               # 📜 แผงควบคุมหลัก: โหลดและกำหนดค่าทั้งหมด
+│   ├── dispatcher.py           # 🚦 ผู้ควบคุมวงออร์เคสตรา: บัญชาการ Agent ทั้งหมด
+│   ├── graph_manager.py        # 🕸️ ผู้จัดการกราฟ
+│   ├── memory_manager.py       # 🧠 สมองส่วนฮิปโปแคมปัส: จัดการความจำและสถานะ
+│   ├── long_term_memory_manager.py # 🏛️ ผู้จัดการความทรงจำระยะยาว
+│   ├── news_cache_manager.py   # 🗃️ ผู้จัดการแคชข่าว
+│   └── rag_engine.py           # 🔍 เครื่องมือค้นหาอัจฉริยะ (RAG)
+│
+├── data/                       # 📦 คลังข้อมูล (The Vault): ที่เก็บข้อมูลถาวร
+│   ├── books/                  # 📚 ชั้นหนังสือ (.jsonl)
+│   ├── index/                  # 📇 ตู้ดัชนีหนังสือ (Vector Stores)
+│   ├── memory_index/           # 🧠 ดัชนีความทรงจำ (Vector Store)
+│   ├── news_index/             # 📰 ดัชนีข่าว (Vector Store)
+│   └── memory.db               # 💾 ฐานข้อมูลความทรงจำ (SQLite)
+│
+├── neo4j-data/                 # 🧠 สมองส่วน Knowledge Graph
+├── sandbox_workspace/          # 🔬 ห้องทดลอง (สำหรับ Code Agent)
+│
+├── web/                        # 🎨 ส่วนหน้าบ้าน (Frontend)
+│   ├── index.html
+│   └── static/ (script.js, styles.css, graph_styles.css)
+│
+├── .env                        # 🤫 ตู้นิรภัย (API Keys, Passwords)
+├── .gitignore                  # 🙈 รายการสิ่งที่ต้องเมิน
+│
+├── main.py                     # ▶️ ปุ่มสตาร์ท (FastAPI Server)
+├── knowledge_extractor.py      # 🏭 โรงงานสกัดความรู้ (ETL for KG)
+├── manage_data.py              # 🛠️ เครื่องมือจัดการข้อมูล (ETL for RAG)
+├── manage_memory.py            # 🛠️ เครื่องมือจัดการความทรงจำ
+├── manage_news.py              # 🛠️ เครื่องมือจัดการข่าว
+└── requirements.txt            # 📜 พิมพ์เขียวการติดตั้ง: รายการไลบรารีทั้งหมด
+
+---
+II. 🌊 การไหลของข้อมูลและตรรกะ (Logic & Data Flow Blueprint)
+Version: 4.0 (The Conductor Architecture)
+กระบวนการทำงานทั้งหมดถูกควบคุมโดย dispatcher.py ซึ่งเปรียบเสมือน "ผู้ควบคุมวงออร์เคสตรา" (The Conductor) ที่ทำหน้าที่บัญชาการ "ทีมผู้เชี่ยวชาญ" ทั้งหมดตาม "แฟ้มงาน" ที่ได้รับมาจาก "หน่วยคัดกรอง"
+Flow 0: ภารกิจต่อเนื่อง (Continuing Mission)
+ผู้ควบคุม: Dispatcher
+ผู้ช่วย: MemoryManager
+กระบวนการ:
+ตรวจสอบสถานะ: เมื่อได้รับ query ใหม่ Dispatcher จะตรวจสอบกับ MemoryManager.check_and_clear_pending_deep_dive() เป็นอันดับแรกเสมอ
+เงื่อนไข: หากผู้ใช้เพิ่งตอบรับ "ข้อเสนอ" การวิเคราะห์เชิงลึกจาก ProactiveOfferAgent
+การดำเนินการ: Dispatcher จะดึง "คำถามดั้งเดิม" ที่บันทึกไว้ออกมา และ ข้ามไปยัง Flow 2 ทันที โดยส่งคำถามนั้นตรงไปให้ PlannerAgent
+Flow 1: การคัดกรองอัจฉริยะ (Intelligent Triage)
+ผู้รับผิดชอบ: FengAgent (The Triage Unit)
+กระบวนการ:
+Quick Response: หาก query เป็นการทักทาย/อำลาพื้นฐาน FengAgent จะตอบกลับทันที และ Flow จะสิ้นสุดลงที่นี่
+Correction & Classification: หากไม่ใช่ Quick Response, FengAgent จะใช้ Llama 3 8B เพื่อ:
+แก้ไขคำผิด (Correction): ปรับแก้คำที่อาจจะพิมพ์ผิดใน query
+วิเคราะห์เจตนา (Classification): จำแนกเจตนาของ "คำถามที่แก้ไขแล้ว" ออกเป็น 1 ใน 9 ประเภท (เช่น GENERAL_CONVERSATION, DEEP_ANALYSIS_REQUEST, COUNSELING_REQUEST)
+สร้างแฟ้มงาน: FengAgent จะสร้าง "แฟ้มงาน" (dispatch_order) ที่ประกอบด้วย corrected_query และ intent แล้วส่งกลับไปให้ Dispatcher
+Flow 2: การบัญชาการตามเจตนา (Intent-based Delegation)
+ผู้ควบคุม: Dispatcher
+ผู้ปฏิบัติการ: ทีมผู้เชี่ยวชาญทั้งหมด
+กระบวนการ:
+Dispatcher รับ "แฟ้มงาน" จาก FengAgent
+ใช้ intent_to_agent_map เพื่อหาว่า "ผู้เชี่ยวชาญ" คนไหนที่ต้องรับผิดชอบภารกิจนี้
+จ่ายงาน: Dispatcher จะเรียกใช้ handle() ของ Agent ที่ถูกต้อง โดยส่ง corrected_query และ short_term_memory ไปให้
+ตัวอย่างการจ่ายงาน:
+intent: GENERAL_CONVERSATION -> เรียก GeneralConversationAgent (ใช้ Llama 3 70B + KG-RAG)
+intent: DEEP_ANALYSIS_REQUEST -> เรียก ProactiveOfferAgent (ใช้ Llama 3 70B + KG-RAG)
+intent: COUNSELING_REQUEST -> เรียก CounselorAgent (ใช้ Gemini 1.5 Flash)
+intent: NEWS_REQUEST -> เรียก NewsAgent (ใช้ Llama 3 70B)
+intent: LIBRARIAN_REQUEST -> เรียก LibrarianAgent (ใช้ Llama 3 8B หรือ Rule-based)
+และอื่นๆ...
+Flow 3: การจัดการผลลัพธ์และการสรุปผล (Outcome Management & Finalization)
+ผู้ควบคุม: Dispatcher
+ผู้ช่วย: FormatterAgent, MemoryManager
+กระบวนการ:
+รับผลลัพธ์: Dispatcher รับผลลัพธ์ที่ได้จาก Agent ผู้ปฏิบัติการ
+จัดการสถานะ:
+หากผลลัพธ์มาจาก ProactiveOfferAgent, Dispatcher จะเรียก MemoryManager.set_pending_deep_dive() เพื่อบันทึกสถานะ "รอการยืนยัน"
+ส่งต่อให้บรรณาธิการ:
+หากผลลัพธ์มาจาก Agent ที่ต้องการการขัดเกลา (เช่น PlannerAgent, NewsAgent), Dispatcher จะสร้าง "แฟ้มงานบรรณาธิการ" และส่งต่อไปให้ FormatterAgent (ใช้ Gemini 1.5 Flash)
+บันทึกความทรงจำ: Dispatcher จะบันทึก "คำตอบสุดท้าย" ลงใน MemoryManager.add_memory()
+สร้าง FinalResponse: Dispatcher รวบรวมข้อมูลทั้งหมด (answer, agent_used, thought_process, etc.) สร้างเป็นอ็อบเจกต์ FinalResponse แล้วส่งกลับไปให้ main.py เพื่อนำเสนอผู้ใช้
+Flow พิเศษ: ตาข่ายความปลอดภัย (Safety Net)
+ผู้ควบคุม: Dispatcher
+ผู้ปฏิบัติการ: ApologyAgent
+กระบวนการ:
+หากเกิดข้อผิดพลาดร้ายแรง (Exception) ใน Flow ใดๆ ก็ตาม
+Dispatcher จะดักจับ Error นั้นไว้ และเรียกใช้ ApologyAgent
+ApologyAgent จะสร้างคำขอโทษที่เหมาะสม และ Dispatcher จะส่งคำขอโทษนั้นกลับไปให้ผู้ใช้แทนข้อความ Error
+
+สรุปสถาปัตยกรรมหลักของ Project Nexus (ฉบับสมบูรณ์)
+Project Nexus ไม่ได้ใช้สถาปัตยกรรมเพียงหนึ่งเดียว แต่เป็นการ "หลอมรวมสถาปัตยกรรมหลายชั้น" (Layered Architectural Blend) ที่ทำงานร่วมกันอย่างเป็นระบบ เพื่อสร้าง "สหายทางปัญญา" (Intellectual Companion) ที่สมบูรณ์แบบ โดยสามารถแบ่งออกเป็น 3 ระดับหลักดังนี้:
+1. สถาปัตยกรรมระดับ AI และการตัดสินใจ (AI & Decision-Making Architecture)
+Dispatcher-Centric Mixture of Experts (MoE):
+นี่คือ "หัวใจ" ของระบบทั้งหมด โปรเจกต์ของคุณใช้ Dispatcher เป็น "ผู้ควบคุมวงออร์เคสตรา" (The Conductor) ที่ชาญฉลาด มันไม่ได้ปล่อยให้ Agent ทำงานอย่างอิสระ แต่จะรับ "แฟ้มงาน" ที่ผ่านการคัดกรองจาก FengAgent แล้ว "บัญชาการ" มอบหมายภารกิจให้ "ผู้เชี่ยวชาญ" ที่เหมาะสมที่สุดตามลำดับชั้น ทำให้ระบบมีความสามารถในการตัดสินใจที่ซับซ้อนและเป็นระบบระเบียบสูงสุด
+Hybrid Model Strategy (Mixture of Models):
+นี่คือ "ขุมพลัง" ของระบบ โดยการผสมผสานจุดแข็งของโมเดลจากหลายสังกัด:
+Google Gemini: ถูกใช้สำหรับงานที่ต้องการ "คุณภาพและความลึกซึ้ง" สูงสุด เช่น การสังเคราะห์บทวิเคราะห์ และการให้คำปรึกษาเชิงอารมณ์
+Groq (Llama 3): ถูกใช้สำหรับงานที่ต้องการ "ความเร็วและความฉลาดที่สมดุล" เช่น การสนทนาโต้ตอบ, การสรุปข่าว, และการเขียนโค้ด
+Advanced RAG (Plan-Retrieve-Synthesize):
+นี่คือ "กระดูกสันหลัง" ของการค้นหาความรู้เชิงลึก โดย PlannerAgent จะดำเนินกระบวนการที่ซับซ้อนกว่า RAG ทั่วไป:
+Plan: สร้าง "พิมพ์เขียวสำหรับการค้นคว้า" และคำค้นหาย่อย
+Retrieve: ดึงข้อมูลจากหลายแหล่ง (หนังสือ, ความทรงจำ) ตามแผน
+Synthesize: หลอมรวมข้อมูลที่ได้มาทั้งหมดเพื่อสร้างเป็น "ภูมิปัญญา" ฉบับใหม่
+KG-RAG (Knowledge Graph-Augmented RAG):
+นี่คือ "สัญชาตญาณ" ที่ทำให้ "เฟิง" มีมิติ โดย GeneralConversationAgent และ ProactiveOfferAgent ใช้เทคนิคนี้เพื่อสร้างบทสนทนาที่ลึกซึ้ง โดยการดึงข้อมูลจาก 2 แหล่งพร้อมกัน:
+Knowledge Graph (GraphManager): เพื่อหา "ความสัมพันธ์เชิงโครงสร้าง"
+Vector Store (RAGEngine): เพื่อหา "ความคล้ายคลึงเชิงความหมาย"
+2. สถาปัตยกรรมระดับแอปพลิเคชันและบริการ (Application & Service Architecture)
+Service-Oriented & API-Driven:
+แม้ว่าโปรเจกต์จะรันเป็นแอปพลิเคชันเดียว (Monolith) แต่การออกแบบภายในนั้นเป็นแบบ "แยกส่วนอย่างชัดเจน" โดยมี main.py (FastAPI) ทำหน้าที่เป็น Gateway กลางที่ให้บริการ API Endpoints (/ask, /api/graph/explore) ทำให้ส่วน Backend และ Frontend แยกจากกันอย่างสมบูรณ์ และพร้อมที่จะถูกแยกเป็น Microservices ในอนาคต
+Client-Server Architecture:
+เป็นสถาปัตยกรรมพื้นฐานที่ชัดเจน โดยมี web/ ทำหน้าที่เป็น Client (ฝั่งผู้ใช้) และ main.py ทำหน้าที่เป็น Server ที่ประมวลผลและส่งข้อมูลกลับไป
+3. สถาปัตยกรรมระดับข้อมูลและซอฟต์แวร์ (Data & Software Architecture)
+ETL (Extract, Transform, Load) Pipelines:
+ระบบมี "โรงงานข้อมูล" แยกต่างหากสำหรับบำรุงรักษาคลังความรู้ ซึ่งก็คือไฟล์สคริปต์ต่างๆ ใน Root Directory (knowledge_extractor.py, manage_data.py, etc.) ทำหน้าที่เป็นท่อ ETL ในการแปลงข้อมูลดิบให้กลายเป็นความรู้ที่พร้อมใช้งาน
+Modular Architecture & Dependency Injection:
+โครงสร้างโปรเจกต์ทั้งหมดถูกออกแบบมาอย่างดีเยี่ยมในแบบ Modular (core, agents, data) และมีการใช้หลักการ Dependency Injection อย่างสมบูรณ์ใน main.py ซึ่งเป็นหัวใจของการเขียนโค้ดที่สะอาด, ทดสอบง่าย, และง่ายต่อการบำรุงรักษาและต่อยอดในอนาคต
+สรุปในประโยคเดียว (The Elevator Pitch):
+Project Nexus คือ "สหายทางปัญญา" ที่ขับเคลื่อนด้วยสถาปัตยกรรม "Mixture of Experts & Models" ซึ่งถูกบัญชาการโดย "Dispatcher" กลาง, มีความสามารถในการใช้ "Advanced RAG" และ "KG-RAG" ในการให้เหตุผล, และถูกสร้างขึ้นบนสถาปัตยกรรม "Service-Oriented" ที่ทันสมัยและพร้อมสำหรับการขยายขนาด
+
+
+
+บทสรุปการเดินทาง: จาก "โปรแกรม" สู่ "สหายทางปัญญา"
+การเดินทางของเราเริ่มต้นจากจุดที่เรียบง่ายแต่เต็มไปด้วยความท้าทาย: โปรแกรม knowledge_extractor.py ที่ทำงาน "เร็วเกินไป" ซึ่งเป็นสัญญาณของปัญหาที่ซ่อนอยู่ลึกๆ การเดินทางเพื่อแก้ไขปัญหานั้น ได้นำเราไปสู่การ "ค้นพบ" และ "ขัดเกลา" โปรเจกต์นี้ในทุกมิติ จนมันได้วิวัฒนาการไปไกลเกินกว่าที่เราคาดคิดไว้ในตอนแรก
+นี่คือเรื่องราวการเดินทางของเรา:
+ช่วงที่ 1: การแก้ไขวิกฤตและสร้างรากฐานที่มั่นคง
+เราเริ่มต้นจากการเป็น "นักสืบ" ไล่ล่าหาต้นตอของปัญหาที่มองไม่เห็น ตั้งแต่การตรวจสอบไฟล์, การทดสอบ API, ไปจนถึงการรื้อสร้างสภาพแวดล้อมใหม่ทั้งหมด การเดินทางในช่วงนี้ได้มอบ "วินัย" และ "เครื่องมือ" ที่แข็งแกร่งให้เรา เช่น requirements.txt และความเข้าใจในสถาปัตยกรรมเบื้องหลังอย่างถ่องแท้
+ช่วงที่ 2: การปฏิวัติสถาปัตยกรรม AI
+เมื่อรากฐานมั่นคงแล้ว คุณได้นำเสนอวิสัยทัศน์ที่ยิ่งใหญ่กว่าเดิม เราได้ทำการ "ยกเครื่อง" สถาปัตยกรรมครั้งสำคัญ:
+จาก "All-in-One" สู่ "Mixture of Experts": เราได้แยกส่วนความสามารถที่ซับซ้อนของ FengAgent เดิม ออกมาเป็น "ทีมผู้เชี่ยวชาญ" ที่มีหน้าที่ชัดเจน (Planner, Counselor, Listener, Formatter, etc.)
+จาก "ศูนย์กลางที่ Agent" สู่ "ศูนย์กลางที่ Dispatcher": เราได้เปลี่ยน Dispatcher จากแค่ "ผู้จ่ายงาน" ให้กลายเป็น "ผู้ควบคุมวงออร์เคสตรา" ที่ชาญฉลาด ทำให้การทำงานร่วมกันของ Agent ทั้งหมดเป็นไปอย่างมีระบบและสง่างาม
+จาก "สังกัดเดียว" สู่ "ทีมผสม": เราได้ทำการ "สรรหาบุคลากร" จากหลายสังกัด โดยนำความ "เร็ว" ของ Groq (Llama 3) มาเสริมทัพความ "ลึกซึ้ง" ของ Google (Gemini) สร้างเป็นทีม AI ที่มีความสามารถรอบด้าน
+ช่วงที่ 3: การหลอมรวม "จิตวิญญาณ"
+นี่คือช่วงสุดท้ายและสำคัญที่สุด เราได้ร่วมกันสร้าง "จิตวิญญาณ" ให้กับ "เฟิง" ผ่านการออกแบบ Prompt อย่างละเอียดลึกซึ้ง:
+เราสร้าง persona_core.py ให้เป็น "บัตรประจำตัว" ที่กำหนด DNA ร่วมกันของทุก Agent
+เราออกแบบ FengAgent ใหม่ ให้เป็น "หน่วยคัดกรองอัจฉริยะ" ที่ทำหน้าที่เป็นประตูบานแรกสู่ความสามารถทั้งหมด
+เราสร้าง Agent ใหม่ๆ ที่สามารถ "รับฟัง", "เข้าอกเข้าใจ", และ "ร่วมไตร่ตรอง" กับผู้ใช้ได้ ทำให้ "เฟิง" ไม่ใช่แค่ AI ที่ให้ข้อมูล แต่เป็น "สหายทางปัญญา" อย่างแท้จริง
+ผลลัพธ์สุดท้าย: สิ่งที่เราได้สร้างขึ้น
+ณ จุดนี้ PROJECT NEXUS ไม่ใช่แค่ "โปรแกรม" อีกต่อไป แต่มันคือ "ระบบนิเวศ AI ที่มีชีวิต" ที่มี:
+สมองส่วนหน้า (Dispatcher): ที่สามารถตัดสินใจและบัญชาการได้อย่างซับซ้อน
+ทีมผู้เชี่ยวชาญ (Agents): ที่มีความสามารถหลากหลายและทำงานร่วมกันได้อย่างราบรื่น
+ขุมพลังแบบผสมผสาน (Gemini + Groq): ที่ให้ทั้งคุณภาพและความเร็ว
+ความทรงจำ (Memory + KG + RAG): ที่สามารถเรียนรู้และเข้าใจได้อย่างลึกซึ้ง
+และที่สำคัญที่สุดคือ "หัวใจ" (Persona): ที่ทำให้มันเป็น "เฟิง" สหายที่พร้อมจะร่วมไตร่ตรองไปกับผู้ใช้
+การเดินทางของเราได้สิ้นสุดลงแล้ว และพิมพ์เขียวทั้งหมดก็เสร็จสมบูรณ์แล้วจริงๆ ครับ ผมรู้สึกเป็นเกียรติอย่างยิ่งที่ได้ร่วมเดินทางและเป็นผู้ช่วยของคุณในการสร้างสรรค์ผลงานที่น่าทึ่งชิ้นนี้
+
+PROJECT NEXUS: เอกสารข้อมูลสรุปทางเทคนิค (Technical Fact Sheet)
+1. เฟรมเวิร์กและไลบรารีหลัก (Frameworks & Core Libraries)
+Backend Framework:
+FastAPI: เฟรมเวิร์กหลักสำหรับสร้าง API Server ที่มีประสิทธิภาพสูง, ทันสมัย, และทำงานแบบ Asynchronous
+Uvicorn: ASGI server ที่ใช้ในการรันแอปพลิเคชัน FastAPI
+AI & LLM Interaction:
+Google Generative AI SDK (google-generativeai): ไลบรารีหลักสำหรับเชื่อมต่อและใช้งานโมเดล Gemini
+Groq SDK (groq): ไลบรารีหลักสำหรับเชื่อมต่อและใช้งานโมเดลบนแพลตฟอร์ม Groq (Llama 3, etc.)
+Data Science & RAG:
+Sentence-Transformers: ไลบรารีหลักที่ใช้ในการแปลงข้อความเป็น Vector Embeddings
+FAISS (Facebook AI Similarity Search): ไลบรารีหลักที่ใช้ในการสร้างและค้นหา Vector Index ที่มีความเร็วสูง (ทั้งเวอร์ชัน CPU และ GPU)
+Database Connectors:
+Neo4j Python Driver (neo4j): ไลบรารีสำหรับเชื่อมต่อและส่งคำสั่ง Cypher ไปยังฐานข้อมูล Neo4j
+SQLite3: ไลบรารีมาตรฐานของ Python สำหรับจัดการฐานข้อมูล memory.db
+Utility & Others:
+Pydantic: ใช้สำหรับ Data Validation และกำหนดโครงสร้างของ API Request/Response
+Dotenv (python-dotenv): ใช้สำหรับจัดการ Environment Variables และข้อมูลลับ
+Requests, BeautifulSoup4, feedparser: ใช้สำหรับดึงและประมวลผลข้อมูลจากเว็บ (NewsAgent)
+Pyperclip, Pycaw: ใช้สำหรับควบคุมระบบปฏิบัติการ (SystemAgent)
+2. โปรแกรมและบริการที่เกี่ยวข้อง (Associated Software & Services)
+Database Systems:
+Neo4j: ฐานข้อมูลกราฟ (Graph Database) ที่ใช้เป็น "สมองส่วนความเข้าใจเชิงโครงสร้าง" (Knowledge Graph)
+SQLite: ฐานข้อมูลแบบไฟล์ ใช้เป็น "คลังข้อมูลดิบ" สำหรับความทรงจำระยะยาว (memory.db)
+Cloud AI Services:
+Google AI Platform (Vertex AI): ผู้ให้บริการโมเดล Gemini 1.5 Flash
+GroqCloud: ผู้ให้บริการโมเดล Llama 3 (8B & 70B) ผ่าน LPU Inference Engine
+Development Environment:
+Python 3.12+: ภาษาโปรแกรมหลัก
+Virtual Environment (venv/myenv): เครื่องมือในการแยกสภาพแวดล้อมของโปรเจกต์
+Git & GitHub: เครื่องมือสำหรับ Version Control และการทำงานร่วมกัน
+3. สถาปัตยกรรมที่นำมาใช้ (Architectural Patterns & Concepts)
+AI & Decision-Making Architecture:
+Dispatcher-Centric Mixture of Experts (MoE): สถาปัตยกรรมหลักที่ใช้ Dispatcher เป็นศูนย์กลางในการบัญชาการ "ทีมผู้เชี่ยวชาญ" (Agents)
+Hybrid Model Strategy (Mixture of Models): กลยุทธ์การผสมผสานจุดแข็งของโมเดลจากหลายผู้ให้บริการ (Google & Groq)
+Advanced RAG (Plan-Retrieve-Synthesize): กระบวนการค้นหาข้อมูลเชิงลึกแบบ 3 ขั้นตอน
+KG-RAG (Knowledge Graph-Augmented RAG): เทคนิคการใช้ข้อมูลจากกราฟและเวกเตอร์ร่วมกันเพื่อสร้าง "สัญชาตญาณ"
+Chain of Thought (CoT) Prompting: เทคนิคการออกแบบ Prompt ที่สั่งให้ LLM "คิดเป็นขั้นตอน" เพื่อเพิ่มความแม่นยำ
+Application & Service Architecture:
+Service-Oriented Architecture (SOA) / API-Driven: สถาปัตยกรรมที่เน้นการให้บริการผ่าน API ทำให้ส่วนต่างๆ แยกจากกันอย่างชัดเจน
+Client-Server Architecture: โครงสร้างพื้นฐานที่แยกส่วน Frontend (web/) และ Backend (FastAPI) ออกจากกัน
+Data & Software Architecture:
+ETL (Extract, Transform, Load) Pipelines: กระบวนการเบื้องหลัง (knowledge_extractor.py, manage_data.py) ที่ใช้ในการเตรียมและบำรุงรักษาคลังความรู้
+Modular Architecture: การออกแบบโครงสร้างโปรเจกต์เป็นโมดูลที่ชัดเจน (core, agents, data)
+Dependency Injection: หลักการ "ฉีด" ทรัพยากร (เช่น Key Managers, RAG Engine) เข้าไปใน Agent จากศูนย์กลาง (main.py)
+บทสรุปปิดท้าย (Final Conclusion)
+PROJECT NEXUS คือ "สหายทางปัญญา" (Intellectual Companion) ที่ถูกสร้างขึ้นบน สถาปัตยกรรมแบบผสมผสาน (Hybrid Architecture) ที่ซับซ้อนและทรงพลัง โดยมี Dispatcher ทำหน้าที่เป็น "ผู้ควบคุมวงออร์เคสตรา" ของ "ทีมผู้เชี่ยวชาญ" (Mixture of Experts) ที่ใช้ขุมพลังจาก "โมเดลหลายสังกัด" (Mixture of Models) การตัดสินใจทั้งหมดขับเคลื่อนด้วยตรรกะ Chain of Thought และความสามารถในการให้เหตุผลขั้นสูงจากเทคนิค Advanced RAG และ KG-RAG ทั้งหมดนี้ถูกให้บริการผ่านสถาปัตยกรรม API-Driven ที่ทันสมัย, ยืดหยุ่น, และพร้อมสำหรับการขยายขนาดในอนาคต

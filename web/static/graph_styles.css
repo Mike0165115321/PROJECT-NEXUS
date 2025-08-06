@@ -1,0 +1,119 @@
+/* web/static/graph_styles.css */
+
+/* --- Navbar ด้านบน --- */
+.control-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 2000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    height: 50px; /* กำหนดความสูง */
+}
+.navbar-title {
+    font-weight: 600;
+}
+.navbar-toggles {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.toggle-btn {
+    padding: 5px 15px;
+    border: 1px solid #fff;
+    background: transparent;
+    color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.toggle-btn.is-active {
+    background: #fff;
+    color: #000;
+}
+
+/* --- Layout หลักที่ขยับได้ --- */
+.main-container {
+    padding-top: 50px; /* เว้นที่ให้ Navbar */
+    height: calc(100vh - 50px); /* ความสูงเต็มจอ - ความสูง Navbar */
+    display: grid;
+    transition: grid-template-columns 0.4s ease-in-out;
+}
+/* ตอนที่ Panel แสดง: แบ่งจอเป็น 2 ส่วน */
+.main-container.tp-visible {
+    grid-template-columns: 1fr 400px; /* Chat | Panel */
+    gap: 20px;
+    padding-right: 20px;
+}
+/* ตอนที่ Panel ซ่อน: Chat ขยายเต็ม */
+.main-container.tp-hidden {
+    grid-template-columns: 1fr 0px;
+    gap: 0;
+    padding-right: 0;
+}
+
+.thought-process-panel {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.4s ease-in-out;
+}
+.main-container.tp-hidden .thought-process-panel {
+    opacity: 0;
+    padding: 0;
+}
+
+.tp-content {
+    padding: 15px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+/* --- สไตล์สำหรับเนื้อหาใน Panel --- */
+.tp-section {
+    margin-bottom: 20px;
+}
+.tp-section h4 {
+    font-size: 16px;
+    color: #e0e0e0;
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+.tp-section code {
+    background-color: rgba(0,0,0,0.3);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+    color: #f0f0f0;
+    display: block;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+.rag-chunk {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    border-left: 3px solid #4CAF50; /* สีเขียว RAG */
+}
+.rag-chunk strong {
+    display: block;
+    color: #4CAF50;
+    margin-bottom: 5px;
+}
+.rag-chunk p {
+    margin: 0;
+    color: #ccc;
+}
