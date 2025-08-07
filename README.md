@@ -213,17 +213,86 @@ Follow these instructions to set up and run Project Nexus on your local machine 
 ```
 PROJECT_NEXUS/
 │
-├── agents/             # 🧠 The Agency: Hub of specialized AI Agents
-├── core/               # ⚙️ The Engine Room: Core system mechanics
-├── data/               # 📦 The Vault: Persistent data storage (generated after running scripts)
-├── web/                # 🎨 The Frontend: User-facing web interface
+├── .venv/                      # 📦 สภาพแวดล้อมเสมือนของ Python
 │
-├── .gitignore          # 🙈 Files/directories ignored by Git
-├── main.py             # ▶️ Entry point: FastAPI server
-├── knowledge_extractor.py # 🏭 Knowledge Graph ETL: Extracts and loads knowledge into Neo4j
-├── manage_data.py      # 🛠️ Data Management Tool: ETL for RAG (builds vector stores)
-├── manage_memory.py    # 🛠️ Memory Management Tool
-├── manage_news.py      # 🛠️ News Management Tool
-└── requirements-cpu.txt # 📜 Dependency List: Libraries required for CPU-only setup
+├── agents/                     # 🧠 ศูนย์บัญชาการ (The Agency): ที่รวมของผู้เชี่ยวชาญ (Agents)
+│   │
+│   ├── __init__.py
+│   ├── persona_core.py         # 🆔 บัตรประจำตัว "เฟิง": เก็บ Prompt บุคลิกภาพหลักที่ใช้ร่วมกัน
+│   ├── formatter_agent.py      # 🎨 บรรณาธิการใหญ่: จัดรูปแบบและขัดเกลาคำตอบสุดท้าย
+│   │
+│   ├── coder_mode/             #  - Faction: The Coders Guild
+│   │   ├── __init__.py
+│   │   ├── code_agent.py       # 📝 ที่ปรึกษาโค้ด: ให้คำแนะนำและเขียนโค้ดตัวอย่าง
+│   │   └── code_interpreter_agent.py # 🏃‍♂️ นักปฏิบัติการโค้ด: เขียนและรันโค้ดใน Sandbox
+│   │
+│   ├── consultant_mode/        #  - Faction: The Librarians
+│   │   ├── __init__.py
+│   │   └── librarian_agent.py  # 📚 บรรณารักษ์ผู้แนะนำ: ให้ข้อมูล Meta และแนะนำหนังสือ
+│   │
+│   ├── counseling_mode/        #  - Faction: The Empathic Counselors
+│   │   ├── __init__.py
+│   │   └── counselor_agent.py  # ❤️ สหายผู้เข้าอกเข้าใจ: สร้างพื้นที่ปลอดภัยและรับฟังปัญหาเชิงอารมณ์
+│   │
+│   ├── feng_mode/              #  - Faction: The Core Identity & Triage
+│   │   ├── __init__.py
+│   │   ├── feng_agent.py       # 🕵️ หน่วยคัดกรองอัจฉริยะ: แก้ไขคำผิด, วิเคราะห์เจตนา, และส่งต่อแฟ้มงาน
+│   │   ├── general_conversation_agent.py # 💬 สหายนักสนทนา: จัดการบทสนทนาทั่วไป
+│   │   └── proactive_offer_agent.py    # 🤔 ปราชญ์ผู้ร่วมไตร่ตรอง: ให้คำตอบเบื้องต้นและเสนอการวิเคราะห์ต่อ
+│   │
+│   ├── news_mode/              #  - Faction: The Journalists
+│   │   ├── __init__.py
+│   │   └── news_agent.py       # 📰 บรรณาธิการข่าวกรอง: สรุปข่าวสารล่าสุด
+│   │
+│   ├── storytelling_mode/      #  - Faction: The Listeners
+│   │   ├── __init__.py
+│   │   └── listener_agent.py   # 👂 ผู้รับฟังที่กระตือรือร้น: กระตุ้นให้ผู้ใช้เล่าเรื่องราวต่อ
+│   │
+│   └── utility_mode/           #  - Faction: The Support Crew
+│       ├── __init__.py
+│       ├── apology_agent.py    # 🛡️ ผู้จัดการสถานการณ์: ขอโทษและเสนอทางแก้ไขเมื่อเกิดข้อผิดพลาด
+│       ├── image_agent.py      # 🖼️ นักค้นหาทัศนศิลป์: ค้นหารูปภาพ
+│       ├── reporter_agent.py   # 🕰️ ผู้รายงานเวลา: บอกวันและเวลา
+│       └── system_agent.py     # ⚙️ ผู้ควบคุมระบบปฏิบัติการ: ควบคุม OS
+│
+├── core/                       # ⚙️ ห้องเครื่องยนต์ (The Engine Room): กลไกหลักของระบบ
+│   │
+│   ├── __init__.py
+│   ├── api_key_manager.py      # 🔑 ฝ่ายบุคคล (Google): จัดการคีย์ของ Gemini
+│   ├── groq_key_manager.py     # 🔑 ฝ่ายบุคคล (Groq): จัดการคีย์ของ Groq
+│   ├── code_executor.py        # ⚡️ เครื่องมือรันโค้ด
+│   ├── config.py               # 📜 แผงควบคุมหลัก: โหลดและกำหนดค่าทั้งหมด
+│   ├── dispatcher.py           # 🚦 ผู้ควบคุมวงออร์เคสตรา: บัญชาการ Agent ทั้งหมด
+│   ├── graph_manager.py        # 🕸️ ผู้จัดการกราฟ
+│   ├── memory_manager.py       # 🧠 สมองส่วนฮิปโปแคมปัส: จัดการความจำและสถานะ
+│   ├── long_term_memory_manager.py # 🏛️ ผู้จัดการความทรงจำระยะยาว
+│   ├── news_cache_manager.py   # 🗃️ ผู้จัดการแคชข่าว
+│   └── rag_engine.py           # 🔍 เครื่องมือค้นหาอัจฉริยะ (RAG)
+│
+├── data/                       # 📦 คลังข้อมูล (The Vault): ที่เก็บข้อมูลถาวร
+│   ├── books/                  # 📚 ชั้นหนังสือ (.jsonl)
+│   ├── index/                  # 📇 ตู้ดัชนีหนังสือ (Vector Stores)
+│   ├── memory_index/           # 🧠 ดัชนีความทรงจำ (Vector Store)
+│   ├── news_index/             # 📰 ดัชนีข่าว (Vector Store)
+│   └── memory.db               # 💾 ฐานข้อมูลความทรงจำ (SQLite)
+│
+├── neo4j-data/                 # 🧠 สมองส่วน Knowledge Graph
+├── sandbox_workspace/          # 🔬 ห้องทดลอง (สำหรับ Code Agent)
+│
+├── web/                        # 🎨 ส่วนหน้าบ้าน (Frontend)
+│   ├── index.html
+│   └── static/ (script.js, styles.css, graph_styles.css)
+│
+├── .env                        # 🤫 ตู้นิรภัย (API Keys, Passwords)
+├── .gitignore                  # 🙈 รายการสิ่งที่ต้องเมิน
+│
+├── main.py                     # ▶️ ปุ่มสตาร์ท (FastAPI Server)
+├── knowledge_extractor_gemini.py     # 🏭 โรงงานสกัดความรู้ gemini (ETL for KG)
+├── knowledge_extractor_llama.py      # 🏭 โรงงานสกัดความรู้ llama (ETL for KG)
+├── manage_data.py              # 🛠️ เครื่องมือจัดการข้อมูล (ETL for RAG)
+├── manage_memory.py            # 🛠️ เครื่องมือจัดการความทรงจำ
+├── manage_news.py              # 🛠️ เครื่องมือจัดการข่าว
+└── requirements.txt            # 📜 พิมพ์เขียวการติดตั้ง: รายการไลบรารีทั้งหมด
+
 ```
 
