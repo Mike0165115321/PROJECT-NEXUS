@@ -1,373 +1,126 @@
-# PROJECT NEXUS: สหายทางปัญญา (The Intellectual Companion)
+# 🧠 PROJECT NEXUS: An Advanced AI Intellectual Companion
 
-**Project Nexus** คือระบบนิเวศ AI ที่ซับซ้อนและหลากหลาย ถูกออกแบบมาเพื่อเป็น "สหายทางปัญญา" อย่างแท้จริง มันไม่ใช่แค่แชทบอททั่วไป แต่เป็น "ทีมผู้เชี่ยวชาญ AI" ที่ทำงานร่วมกันอย่างเป็นระบบ โดยมีผู้บัญชาการกลาง (Dispatcher) คอยควบคุม เพื่อสร้างสรรค์คำตอบที่ลึกซึ้ง, เข้าใจบริบท, และมีเหตุผลประกอบอย่างสมบูรณ์
+[![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/)
+[![Framework](https://img.shields.io/badge/Framework-FastAPI-green.svg)](https://fastapi.tiangolo.com/)
+[![Models](https://img.shields.io/badge/Models-Gemini%20%7C%20Llama%203-purple.svg)](https://deepmind.google/technologies/gemini/)
+[![Database](https://img.shields.io/badge/Database-Neo4j%20%7C%20FAISS-orange.svg)](https://neo4j.com/)
 
----
-
-## ✨ คุณสมบัติเด่น (Key Features)
-
-*   **สถาปัตยกรรม Mixture of Experts (MoE):** มี `Dispatcher` กลางคอยวิเคราะห์และจ่ายงานให้ Agent ที่เชี่ยวชาญที่สุดในแต่ละด้าน เช่น การเขียนโค้ด, การให้คำปรึกษา, การสรุปข่าว, หรือการสนทนาทั่วไป
-*   **กลยุทธ์ Hybrid Model:** ผสมผสานความเร็วของ **Groq (Llama 3)** สำหรับการโต้ตอบที่ฉับไว เข้ากับความลุ่มลึกของ **Google Gemini** สำหรับการวิเคราะห์ที่ซับซ้อน
-*   **ระบบความจำขั้นสูง:** ใช้เทคนิค **Advanced RAG** และ **KG-RAG** (Knowledge Graph-Augmented RAG) เพื่อค้นหาข้อมูลจากคลังความรู้ (หนังสือ) และกราฟความสัมพันธ์ ทำให้การตอบสนองมีมิติและสัญชาตญาณ
-*   **โครงสร้างที่พร้อมขยายขนาด:** ออกแบบด้วย **FastAPI** ในสถาปัตยกรรมแบบ Modular และ Service-Oriented ทำให้ง่ายต่อการบำรุงรักษาและต่อยอดในอนาคต
+**Project Nexus** คือ "สหายทางปัญญา" (Intellectual Companion) ที่ถูกสร้างขึ้นบนสถาปัตยกรรม **"Dispatcher-Centric Mixture of Experts & Models"** ที่ซับซ้อนและทรงพลัง มันไม่ได้เป็นเพียง AI ตัวเดียว แต่เป็น "ระบบนิเวศ" ของผู้เชี่ยวชาญเฉพาะทางที่ทำงานร่วมกันภายใต้การบัญชาการของ "ผู้ควบคุมวงออร์เคสตรา" กลาง เพื่อมอบประสบการณ์การสนทนาที่ลึกซึ้ง, มีเหตุผล, และเข้าใจในอารมณ์
 
 ---
 
-## 🚀 การติดตั้งและเริ่มต้นใช้งาน (Getting Started)
+## 🏛️ สถาปัตยกรรมหลัก: The Layered Architectural Blend
 
-ทำตามขั้นตอนต่อไปนี้เพื่อติดตั้งและรันโปรเจกต์บนเครื่องของคุณ
+Project Nexus ไม่ได้ใช้สถาปัตยกรรมเพียงหนึ่งเดียว แต่เป็นการ "หลอมรวมสถาปัตยกรรมหลายชั้น" ที่ทำงานร่วมกันอย่างเป็นระบบ:
 
-### 1. สิ่งที่ต้องมี (Prerequisites)
+### 1. สถาปัตยกรรมระดับ AI และการตัดสินใจ (AI & Decision-Making)
+- **Dispatcher-Centric Mixture of Experts (MoE):** หัวใจของระบบคือ `Dispatcher` ที่ทำหน้าที่เป็น "ผู้ควบคุมวง" รับ "แฟ้มงาน" ที่ผ่านการคัดกรองจาก `FengAgent` แล้วบัญชาการมอบหมายภารกิจให้ "ผู้เชี่ยวชาญ" (Agent) ที่เหมาะสมที่สุด
+- **Hybrid Model Strategy (Mixture of Models):** ผสมผสานจุดแข็งของโมเดลจากหลายสังกัด:
+  - **Google Gemini 1.5 Flash:** สำหรับงานที่ต้องการคุณภาพ, ความลึกซึ้ง, และการให้เหตุผลเชิงอารมณ์
+  - **Groq (Llama 3 8B & 70B):** สำหรับงานที่ต้องการความเร็วสูงและความฉลาดที่สมดุล เช่น การสนทนาโต้ตอบ, การคัดกรอง, และการสรุปผล
+- **Advanced RAG & KG-RAG:** กระดูกสันหลังของการค้นหาความรู้เชิงลึก โดยใช้เทคนิค `Plan-Retrieve-Synthesize` และการดึงข้อมูลจาก Knowledge Graph (Neo4j) และ Vector Store (FAISS) พร้อมกันเพื่อสร้าง "สัญชาตญาณ" ให้กับ AI
 
-*   Python 3.11+
-*   Git
-*   ฐานข้อมูล [Neo4j](https://neo4j.com/download/) ที่กำลังทำงานอยู่ (สำหรับฟีเจอร์ Knowledge Graph)
+### 2. สถาปัตยกรรมระดับแอปพลิเคชันและบริการ (Application & Service)
+- **Service-Oriented & API-Driven:** ออกแบบภายในแบบแยกส่วนอย่างชัดเจน โดยมี `main.py` (FastAPI) ทำหน้าที่เป็น Gateway กลาง ให้บริการ API Endpoints ทำให้พร้อมที่จะถูกแยกเป็น Microservices ในอนาคต
 
-### 2. การติดตั้ง (Installation)
-
-1.  **Clone Repository:**
-    ```sh
-    git clone https://github.com/Mike0165115321/My_AI_PROJECT-NEXUS.git
-    cd PROJECT-NEXUS
-    ```
-
-2.  **สร้างและเปิดใช้งาน Virtual Environment:**
-    ```sh
-    # สำหรับ Windows
-    python -m venv .venv
-    .\.venv\Scripts\Activate.ps1
-
-    # สำหรับ Linux/macOS (เช่นใน WSL)
-    python3 -m venv .venv
-    source .venv/bin/activate
-    ```
-
-3.  **ติดตั้ง Dependencies:**
-    *   **สำหรับสภาพแวดล้อมที่ใช้ CPU เท่านั้น (แนะนำสำหรับเริ่มต้น):**
-        ```sh
-        pip install -r requirements-cpu.txt
-        ```
-
-4.  **ตั้งค่า Environment Variables:**
-    *   สร้างไฟล์ชื่อ `.env` ขึ้นมาในโฟลเดอร์หลักของโปรเจกต์
-    *   คัดลอกและวางเนื้อหาด้านล่างลงในไฟล์ `.env` แล้วแก้ไขค่าต่างๆ ให้ถูกต้อง:
-        ```env
-        # --- API Keys ---
-        GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
-        GROQ_API_KEY="YOUR_GROQ_API_KEY"
-        
-        # --- Neo4j Credentials ---
-        NEO4J_URI="bolt://localhost:7687"
-        NEO4J_USER="neo4j"
-        NEO4J_PASSWORD="YOUR_NEO4J_PASSWORD"
-        ```
-
-### 3. การเตรียมข้อมูล (Data Preparation)
-
-**สำคัญ:** Repository นี้ไม่มีข้อมูลเริ่มต้นมาให้ คุณต้องสร้างคลังความรู้ขึ้นเองโดยใช้สคริปต์ที่เตรียมไว้ให้
-
-1.  **เตรียมข้อมูลหนังสือ:**
-    *   นำไฟล์หนังสือของคุณ (แนะนำให้เป็นไฟล์ `.txt`) ไปวางไว้ในโฟลเดอร์ `data/books/` (ถ้ายังไม่มีโฟลเดอร์ `data` หรือ `books` ให้สร้างขึ้นมาก่อน)
-
-2.  **สร้างดัชนีสำหรับ RAG (Vector Store):**
-    *   รันสคริปต์เพื่อประมวลผลหนังสือและสร้าง Vector Index:
-        ```sh
-        python manage_data.py
-        ```
-
-3.  **สร้างฐานข้อมูล Knowledge Graph:**
-    *   รันสคริปต์เพื่อสกัดข้อมูลความสัมพันธ์จากหนังสือและนำเข้าสู่ Neo4j:
-        ```sh
-        #key LLM Gemini
-        python knowledge_extractor_gemini.py
-        #key LLM Grop
-        knowledge_extractor_llama.py
-        
-        ```
-
-### 4. รันแอปพลิเคชัน (Run the Application)
-
-*   เมื่อเตรียมข้อมูลเสร็จแล้ว ให้สตาร์ทเซิร์ฟเวอร์:
-    ```sh
-    python main.py
-    ```
-*   ระบบจะพร้อมใช้งานที่ `http://127.0.0.1:8000`
-*   ดูเอกสาร API แบบโต้ตอบได้ที่ `http://127.0.0.1:8000/docs`
+### 3. สถาปัตยกรรมระดับข้อมูลและซอฟต์แวร์ (Data & Software)
+- **ETL Pipelines:** มี "โรงงานข้อมูล" แยกต่างหาก (`knowledge_extractor_*.py`, `manage_data.py`) สำหรับบำรุงรักษาคลังความรู้
+- **Modular Architecture & Dependency Injection:** โครงสร้างโปรเจกต์ถูกออกแบบเป็นโมดูล (core, agents) และใช้หลักการ Dependency Injection อย่างสมบูรณ์ ทำให้โค้ดสะอาด, ทดสอบง่าย, และง่ายต่อการบำรุงรักษา
 
 ---
 
-## 🗺️ โครงสร้างโปรเจกต์ (Project Structure)
+## ✨ คุณสมบัติหลัก (Key Features)
 
+- **ทีมผู้เชี่ยวชาญเฉพาะทาง (Multi-Agent Expertise):**
+  - **Counselor:** ให้คำปรึกษาและพื้นที่ปลอดภัยเชิงอารมณ์
+  - **Coder & Interpreter:** ให้คำแนะนำ, เขียน, และรันโค้ดใน Sandbox
+  - **Librarian:** ให้ข้อมูลและแนะนำหนังสือจากฐานความรู้
+  - **News Editor:** สรุปข่าวสารล่าสุดจากแหล่งข้อมูลออนไลน์
+  - **Listener:** กระตุ้นและรับฟังเรื่องราวจากผู้ใช้
+  - **Formatter:** บรรณาธิการใหญ่ที่ขัดเกลาคำตอบสุดท้ายให้สละสลวย
+- **หน่วยคัดกรองอัจฉริยะ (`FengAgent`):** ทำหน้าที่เป็นประตูบานแรกในการแก้ไขคำผิดและวิเคราะห์เจตนาของผู้ใช้ก่อนส่งต่อภารกิจ
+- **ความทรงจำหลายมิติ (Multi-faceted Memory):**
+  - **Short-Term:** ความจำระยะสั้นสำหรับการสนทนา (SQLite)
+  - **Long-Term:** ความจำระยะยาวที่สามารถค้นหาได้ (Vector Store)
+  - **Structural:** ความเข้าใจเชิงโครงสร้างความสัมพันธ์ (Knowledge Graph - Neo4j)
+- **Web Interface:** หน้าเว็บสำหรับโต้ตอบกับ AI พร้อมระบบแสดงผล Knowledge Graph แบบ Interactive
+
+---
+
+## 🚀 การติดตั้งและใช้งาน (Installation & Usage)
+
+**Prerequisites:**
+- Python 3.12+
+- Git
+- Neo4j Desktop (หรือ AuraDB)
+
+**1. Clone Repository:**
 ```
-PROJECT_NEXUS/
-│
-├── .venv/                      # 📦 สภาพแวดล้อมเสมือนของ Python
-│
-├── agents/                     # 🧠 ศูนย์บัญชาการ (The Agency): ที่รวมของผู้เชี่ยวชาญ (Agents)
-│   │
-│   ├── __init__.py
-│   ├── persona_core.py         # 🆔 บัตรประจำตัว "เฟิง": เก็บ Prompt บุคลิกภาพหลักที่ใช้ร่วมกัน
-│   ├── formatter_agent.py      # 🎨 บรรณาธิการใหญ่: จัดรูปแบบและขัดเกลาคำตอบสุดท้าย
-│   │
-│   ├── coder_mode/             #  - Faction: The Coders Guild
-│   │   ├── __init__.py
-│   │   ├── code_agent.py       # 📝 ที่ปรึกษาโค้ด: ให้คำแนะนำและเขียนโค้ดตัวอย่าง
-│   │   └── code_interpreter_agent.py # 🏃‍♂️ นักปฏิบัติการโค้ด: เขียนและรันโค้ดใน Sandbox
-│   │
-│   ├── consultant_mode/        #  - Faction: The Librarians
-│   │   ├── __init__.py
-│   │   └── librarian_agent.py  # 📚 บรรณารักษ์ผู้แนะนำ: ให้ข้อมูล Meta และแนะนำหนังสือ
-│   │
-│   ├── counseling_mode/        #  - Faction: The Empathic Counselors
-│   │   ├── __init__.py
-│   │   └── counselor_agent.py  # ❤️ สหายผู้เข้าอกเข้าใจ: สร้างพื้นที่ปลอดภัยและรับฟังปัญหาเชิงอารมณ์
-│   │
-│   ├── feng_mode/              #  - Faction: The Core Identity & Triage
-│   │   ├── __init__.py
-│   │   ├── feng_agent.py       # 🕵️ หน่วยคัดกรองอัจฉริยะ: แก้ไขคำผิด, วิเคราะห์เจตนา, และส่งต่อแฟ้มงาน
-│   │   ├── general_conversation_agent.py # 💬 สหายนักสนทนา: จัดการบทสนทนาทั่วไป
-│   │   └── proactive_offer_agent.py    # 🤔 ปราชญ์ผู้ร่วมไตร่ตรอง: ให้คำตอบเบื้องต้นและเสนอการวิเคราะห์ต่อ
-│   │
-│   ├── news_mode/              #  - Faction: The Journalists
-│   │   ├── __init__.py
-│   │   └── news_agent.py       # 📰 บรรณาธิการข่าวกรอง: สรุปข่าวสารล่าสุด
-│   │
-│   ├── storytelling_mode/      #  - Faction: The Listeners
-│   │   ├── __init__.py
-│   │   └── listener_agent.py   # 👂 ผู้รับฟังที่กระตือรือร้น: กระตุ้นให้ผู้ใช้เล่าเรื่องราวต่อ
-│   │
-│   └── utility_mode/           #  - Faction: The Support Crew
-│       ├── __init__.py
-│       ├── apology_agent.py    # 🛡️ ผู้จัดการสถานการณ์: ขอโทษและเสนอทางแก้ไขเมื่อเกิดข้อผิดพลาด
-│       ├── image_agent.py      # 🖼️ นักค้นหาทัศนศิลป์: ค้นหารูปภาพ
-│       ├── reporter_agent.py   # 🕰️ ผู้รายงานเวลา: บอกวันและเวลา
-│       └── system_agent.py     # ⚙️ ผู้ควบคุมระบบปฏิบัติการ: ควบคุม OS
-│
-├── core/                       # ⚙️ ห้องเครื่องยนต์ (The Engine Room): กลไกหลักของระบบ
-│   │
-│   ├── __init__.py
-│   ├── api_key_manager.py      # 🔑 ฝ่ายบุคคล (Google): จัดการคีย์ของ Gemini
-│   ├── groq_key_manager.py     # 🔑 ฝ่ายบุคคล (Groq): จัดการคีย์ของ Groq
-│   ├── code_executor.py        # ⚡️ เครื่องมือรันโค้ด
-│   ├── config.py               # 📜 แผงควบคุมหลัก: โหลดและกำหนดค่าทั้งหมด
-│   ├── dispatcher.py           # 🚦 ผู้ควบคุมวงออร์เคสตรา: บัญชาการ Agent ทั้งหมด
-│   ├── graph_manager.py        # 🕸️ ผู้จัดการกราฟ
-│   ├── memory_manager.py       # 🧠 สมองส่วนฮิปโปแคมปัส: จัดการความจำและสถานะ
-│   ├── long_term_memory_manager.py # 🏛️ ผู้จัดการความทรงจำระยะยาว
-│   ├── news_cache_manager.py   # 🗃️ ผู้จัดการแคชข่าว
-│   └── rag_engine.py           # 🔍 เครื่องมือค้นหาอัจฉริยะ (RAG)
-│
-├── data/                       # 📦 คลังข้อมูล (The Vault): ที่เก็บข้อมูลถาวร
-│   ├── books/                  # 📚 ชั้นหนังสือ (.jsonl)
-│   ├── index/                  # 📇 ตู้ดัชนีหนังสือ (Vector Stores)
-│   ├── memory_index/           # 🧠 ดัชนีความทรงจำ (Vector Store)
-│   ├── news_index/             # 📰 ดัชนีข่าว (Vector Store)
-│   └── memory.db               # 💾 ฐานข้อมูลความทรงจำ (SQLite)
-│
-├── neo4j-data/                 # 🧠 สมองส่วน Knowledge Graph
-├── sandbox_workspace/          # 🔬 ห้องทดลอง (สำหรับ Code Agent)
-│
-├── web/                        # 🎨 ส่วนหน้าบ้าน (Frontend)
-│   ├── index.html
-│   └── static/ (script.js, styles.css, graph_styles.css)
-│
-├── .env                        # 🤫 ตู้นิรภัย (API Keys, Passwords)
-├── .gitignore                  # 🙈 รายการสิ่งที่ต้องเมิน
-│
-├── main.py                     # ▶️ ปุ่มสตาร์ท (FastAPI Server)
-├── knowledge_extractor_gemini.py     # 🏭 โรงงานสกัดความรู้ gemini (ETL for KG)
-├── knowledge_extractor_llama.py      # 🏭 โรงงานสกัดความรู้ llama (ETL for KG)
-├── manage_data.py              # 🛠️ เครื่องมือจัดการข้อมูล (ETL for RAG)
-├── manage_memory.py            # 🛠️ เครื่องมือจัดการความทรงจำ
-├── manage_news.py              # 🛠️ เครื่องมือจัดการข่าว
-└── requirements.txt            # 📜 พิมพ์เขียวการติดตั้ง: รายการไลบรารีทั้งหมด
+git clone https://github.com/Mike0165115321/PROJECT-NEXUS.git
+cd PROJECT-NEXUS
+```
+2. สร้างและเปิดใช้งาน Virtual Environment:
+```
+pip install -r requirements.txt
+```
+3. ติดตั้ง Dependencies:
+```
+pip install -r requirements.txt
+```
+4. ตั้งค่า Environment Variables:
+สร้างไฟล์ชื่อ .env ในโฟลเดอร์หลักของโปรเจกต์
+เพิ่ม API Keys และข้อมูลการเชื่อมต่อของคุณลงในไฟล์ .env ดังนี้:
+```
+# AI Model Keys
+GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
+GROQ_API_KEY="YOUR_GROQ_API_KEY_HERE"
+
+# Neo4j Database Credentials
+NEO4J_URI="bolt://localhost:7687"
+NEO4J_USER="neo4j"
+NEO4J_PASSWORD="YOUR_NEO4J_PASSWORD"
+```
+5. เตรียมฐานข้อมูลและคลังความรู้:
+รันสคริปต์ ETL เพื่อประมวลผลข้อมูลดิบและสร้างฐานข้อมูลความรู้ทั้งหมด:
+```
+# สร้าง Vector Index สำหรับหนังสือ
+python manage_data.py
+
+# (ตัวเลือก) สกัด Knowledge Graph จากข้อมูล
+python knowledge_extractor_gemini.py
+```
+6. รันแอปพลิเคชัน:
+```
+uvicorn main:app --reload
+เปิดเว็บเบราว์เซอร์แล้วไปที่ http://127.0.0.1:8000
 ```
 
-# PROJECT NEXUS: The Intellectual Companion
+🌊 โฟลว์การทำงาน: The Conductor Architecture
+กระบวนการทั้งหมดถูกควบคุมโดย dispatcher.py เสมือน "ผู้ควบคุมวงออร์เคสตรา":
+Flow 0 (Continuing Mission): ตรวจสอบว่าผู้ใช้กำลังตอบรับ "ข้อเสนอ" การวิเคราะห์เชิงลึกจากภารกิจก่อนหน้าหรือไม่ ถ้าใช่ จะข้ามไป Flow 2 ทันที
+Flow 1 (Intelligent Triage): FengAgent รับ Query, ตอบกลับถ้าเป็นคำถามง่ายๆ หรือทำการ "แก้ไขคำผิด" และ "วิเคราะห์เจตนา" แล้วสร้างเป็น "แฟ้มงาน" ส่งให้ Dispatcher
+Flow 2 (Intent-based Delegation): Dispatcher รับ "แฟ้มงาน" แล้วเลือก "ผู้เชี่ยวชาญ" (Agent) ที่เหมาะสมที่สุดเพื่อจัดการภารกิจนั้นๆ
+Flow 3 (Finalization): Dispatcher รับผลลัพธ์, ส่งให้ FormatterAgent ขัดเกลา (ถ้าจำเป็น), บันทึกลงในความทรงจำ, และสร้างเป็น FinalResponse ส่งกลับให้ผู้ใช้
+Safety Net: หากเกิดข้อผิดพลาดร้ายแรง Dispatcher จะเรียก ApologyAgent เพื่อจัดการสถานการณ์อย่างนุ่มนวล
+💡 ปรัชญาของโปรเจกต์: การเดินทางจาก "โปรแกรม" สู่ "สหายทางปัญญา"
+การเดินทางของโปรเจกต์นี้เริ่มต้นจากการแก้ไขปัญหาทางเทคนิค แต่ได้นำไปสู่การ "ปฏิวัติสถาปัตยกรรม" ครั้งสำคัญ จาก AI ที่ทำงานแบบ All-in-One สู่ "ทีมผู้เชี่ยวชาญ" ที่ถูกบัญชาการโดย Dispatcher กลาง, จากการใช้โมเดลสังกัดเดียวสู่ "ทีมผสม" ที่ดึงจุดแข็งของทั้ง Gemini และ Llama 3, และท้ายที่สุดคือการหลอมรวม "จิตวิญญาณ" ผ่านการออกแบบ Prompt อย่างละเอียดลึกซึ้ง ทำให้ PROJECT NEXUS ไม่ใช่แค่ "โปรแกรม" อีกต่อไป แต่มันคือ "ระบบนิเวศ AI ที่มีชีวิต" ที่พร้อมจะเป็น "สหาย" ร่วมไตร่ตรองไปกับผู้ใช้
 
-**Project Nexus** is a sophisticated, multi-faceted AI ecosystem designed to be a true intellectual companion. It's more than just a chatbot; it's a "team of AI experts" working in concert, orchestrated by a central dispatcher, to provide nuanced, context-aware, and deeply reasoned responses.
-
----
-
-## ✨ Key Features
-
-*   **Mixture of Experts (MoE) Architecture:** A central `Dispatcher` intelligently analyzes and delegates tasks to specialized AI Agents (e.g., coding, counseling, news summarization, general conversation).
-*   **Hybrid Model Strategy:** Leverages the best of both worlds by combining the speed of **Groq (Llama 3)** for rapid interaction with the profound depth of **Google Gemini** for complex analysis.
-*   **Advanced Memory System:** Utilizes **Advanced RAG** (Retrieval-Augmented Generation) and **KG-RAG** (Knowledge Graph-Augmented RAG) techniques to retrieve information from a knowledge base (books) and a graph database, enabling more insightful and intuitive responses.
-*   **Scalable Architecture:** Built with **FastAPI** using a modular and service-oriented design, ensuring ease of maintenance and future scalability.
-
----
-
-## 🚀 Getting Started
-
-Follow these instructions to set up and run Project Nexus on your local machine for development and testing purposes.
-
-### 1. Prerequisites
-
-*   Python 3.11+
-*   Git
-*   A running [Neo4j](https://neo4j.com/download/) database instance (essential for Knowledge Graph features).
-
-### 2. Installation
-
-1.  **Clone the Repository:**
-    ```sh
-    git clone https://github.com/Mike0165115321/My_AI_PROJECT-NEXUS.git
-    cd My_AI_PROJECT-NEXUS
-    ```
-
-2.  **Create and Activate a Virtual Environment:**
-    ```sh
-    # For Windows
-    python -m venv .venv
-    .\.venv\Scripts\Activate.ps1
-
-    # For Linux/macOS (e.g., inside WSL)
-    python3 -m venv .venv
-    source .venv/bin/activate
-    ```
-
-3.  **Install Dependencies:**
-    *   **For a CPU-only environment (recommended for initial setup/Windows):**
-        ```sh
-        pip install -r requirements-cpu.txt
-        ```
-    *   *(If you intend to run with GPU, you will need to generate a `requirements-gpu.txt` file from your GPU-enabled Linux/WSL environment. This repository includes `requirements-cpu.txt` by default for broader compatibility.)*
-
-4.  **Set up Environment Variables:**
-    *   Create a file named `.env` in the root directory of the project.
-    *   Copy and paste the content below into your `.env` file, replacing the placeholder values with your actual API keys and credentials:
-        ```env
-        # --- API Keys ---
-        GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
-        GROQ_API_KEY="YOUR_GROQ_API_KEY"
-        
-        # --- Neo4j Credentials ---
-        NEO4J_URI="bolt://localhost:7687"
-        NEO4J_USER="neo4j"
-        NEO4J_PASSWORD="YOUR_NEO4J_PASSWORD"
-        ```
-
-### 3. Data Preparation
-
-**IMPORTANT:** This repository does not include any initial data files (books, indexes, etc.) for size and privacy reasons. You must generate your knowledge base by following these steps:
-
-1.  **Prepare Your Book Data:**
-    *   Place your text files (e.g., `.txt` format) containing the knowledge you want Project Nexus to learn into the `data/books/` directory. If `data` or `data/books` folders don't exist, create them manually.
-
-2.  **Generate RAG Index (Vector Store):**
-    *   Run the script to process your book data and create a vector index for Retrieval-Augmented Generation:
-        ```sh
-        python manage_data.py
-        ```
-    *   This will populate `data/index/`, `data/memory_index/`, `data/news_index/`, and `data/memory.db`.
-
-3.  **Build Knowledge Graph:**
-    *   Ensure your Neo4j database is running.
-    *   Run the script to extract relationships and knowledge from your data and import it into Neo4j:
-        ```sh
-        #key LLM Gemini
-        python knowledge_extractor_gemini.py
-        #key LLM Grop
-        knowledge_extractor_llama.py
-        ```
-
-### 4. Run the Application
-
-*   Once all data preparation steps are complete, start the FastAPI server:
-    ```sh
-    python main.py
-    ```
-*   The application will be accessible at `http://127.0.0.1:8000`.
-*   You can explore the interactive API documentation at `http://127.0.0.1:8000/docs`.
-
----
-
-## 🗺️ Project Structure
-
+📄 License
+โปรเจกต์นี้อยู่ภายใต้ลิขสิทธิ์ของ MIT License.
 ```
-PROJECT_NEXUS/
-│
-├── .venv/                      # 📦 สภาพแวดล้อมเสมือนของ Python
-│
-├── agents/                     # 🧠 ศูนย์บัญชาการ (The Agency): ที่รวมของผู้เชี่ยวชาญ (Agents)
-│   │
-│   ├── __init__.py
-│   ├── persona_core.py         # 🆔 บัตรประจำตัว "เฟิง": เก็บ Prompt บุคลิกภาพหลักที่ใช้ร่วมกัน
-│   ├── formatter_agent.py      # 🎨 บรรณาธิการใหญ่: จัดรูปแบบและขัดเกลาคำตอบสุดท้าย
-│   │
-│   ├── coder_mode/             #  - Faction: The Coders Guild
-│   │   ├── __init__.py
-│   │   ├── code_agent.py       # 📝 ที่ปรึกษาโค้ด: ให้คำแนะนำและเขียนโค้ดตัวอย่าง
-│   │   └── code_interpreter_agent.py # 🏃‍♂️ นักปฏิบัติการโค้ด: เขียนและรันโค้ดใน Sandbox
-│   │
-│   ├── consultant_mode/        #  - Faction: The Librarians
-│   │   ├── __init__.py
-│   │   └── librarian_agent.py  # 📚 บรรณารักษ์ผู้แนะนำ: ให้ข้อมูล Meta และแนะนำหนังสือ
-│   │
-│   ├── counseling_mode/        #  - Faction: The Empathic Counselors
-│   │   ├── __init__.py
-│   │   └── counselor_agent.py  # ❤️ สหายผู้เข้าอกเข้าใจ: สร้างพื้นที่ปลอดภัยและรับฟังปัญหาเชิงอารมณ์
-│   │
-│   ├── feng_mode/              #  - Faction: The Core Identity & Triage
-│   │   ├── __init__.py
-│   │   ├── feng_agent.py       # 🕵️ หน่วยคัดกรองอัจฉริยะ: แก้ไขคำผิด, วิเคราะห์เจตนา, และส่งต่อแฟ้มงาน
-│   │   ├── general_conversation_agent.py # 💬 สหายนักสนทนา: จัดการบทสนทนาทั่วไป
-│   │   └── proactive_offer_agent.py    # 🤔 ปราชญ์ผู้ร่วมไตร่ตรอง: ให้คำตอบเบื้องต้นและเสนอการวิเคราะห์ต่อ
-│   │
-│   ├── news_mode/              #  - Faction: The Journalists
-│   │   ├── __init__.py
-│   │   └── news_agent.py       # 📰 บรรณาธิการข่าวกรอง: สรุปข่าวสารล่าสุด
-│   │
-│   ├── storytelling_mode/      #  - Faction: The Listeners
-│   │   ├── __init__.py
-│   │   └── listener_agent.py   # 👂 ผู้รับฟังที่กระตือรือร้น: กระตุ้นให้ผู้ใช้เล่าเรื่องราวต่อ
-│   │
-│   └── utility_mode/           #  - Faction: The Support Crew
-│       ├── __init__.py
-│       ├── apology_agent.py    # 🛡️ ผู้จัดการสถานการณ์: ขอโทษและเสนอทางแก้ไขเมื่อเกิดข้อผิดพลาด
-│       ├── image_agent.py      # 🖼️ นักค้นหาทัศนศิลป์: ค้นหารูปภาพ
-│       ├── reporter_agent.py   # 🕰️ ผู้รายงานเวลา: บอกวันและเวลา
-│       └── system_agent.py     # ⚙️ ผู้ควบคุมระบบปฏิบัติการ: ควบคุม OS
-│
-├── core/                       # ⚙️ ห้องเครื่องยนต์ (The Engine Room): กลไกหลักของระบบ
-│   │
-│   ├── __init__.py
-│   ├── api_key_manager.py      # 🔑 ฝ่ายบุคคล (Google): จัดการคีย์ของ Gemini
-│   ├── groq_key_manager.py     # 🔑 ฝ่ายบุคคล (Groq): จัดการคีย์ของ Groq
-│   ├── code_executor.py        # ⚡️ เครื่องมือรันโค้ด
-│   ├── config.py               # 📜 แผงควบคุมหลัก: โหลดและกำหนดค่าทั้งหมด
-│   ├── dispatcher.py           # 🚦 ผู้ควบคุมวงออร์เคสตรา: บัญชาการ Agent ทั้งหมด
-│   ├── graph_manager.py        # 🕸️ ผู้จัดการกราฟ
-│   ├── memory_manager.py       # 🧠 สมองส่วนฮิปโปแคมปัส: จัดการความจำและสถานะ
-│   ├── long_term_memory_manager.py # 🏛️ ผู้จัดการความทรงจำระยะยาว
-│   ├── news_cache_manager.py   # 🗃️ ผู้จัดการแคชข่าว
-│   └── rag_engine.py           # 🔍 เครื่องมือค้นหาอัจฉริยะ (RAG)
-│
-├── data/                       # 📦 คลังข้อมูล (The Vault): ที่เก็บข้อมูลถาวร
-│   ├── books/                  # 📚 ชั้นหนังสือ (.jsonl)
-│   ├── index/                  # 📇 ตู้ดัชนีหนังสือ (Vector Stores)
-│   ├── memory_index/           # 🧠 ดัชนีความทรงจำ (Vector Store)
-│   ├── news_index/             # 📰 ดัชนีข่าว (Vector Store)
-│   └── memory.db               # 💾 ฐานข้อมูลความทรงจำ (SQLite)
-│
-├── neo4j-data/                 # 🧠 สมองส่วน Knowledge Graph
-├── sandbox_workspace/          # 🔬 ห้องทดลอง (สำหรับ Code Agent)
-│
-├── web/                        # 🎨 ส่วนหน้าบ้าน (Frontend)
-│   ├── index.html
-│   └── static/ (script.js, styles.css, graph_styles.css)
-│
-├── .env                        # 🤫 ตู้นิรภัย (API Keys, Passwords)
-├── .gitignore                  # 🙈 รายการสิ่งที่ต้องเมิน
-│
-├── main.py                     # ▶️ ปุ่มสตาร์ท (FastAPI Server)
-├── knowledge_extractor_gemini.py     # 🏭 โรงงานสกัดความรู้ gemini (ETL for KG)
-├── knowledge_extractor_llama.py      # 🏭 โรงงานสกัดความรู้ llama (ETL for KG)
-├── manage_data.py              # 🛠️ เครื่องมือจัดการข้อมูล (ETL for RAG)
-├── manage_memory.py            # 🛠️ เครื่องมือจัดการความทรงจำ
-├── manage_news.py              # 🛠️ เครื่องมือจัดการข่าว
-└── requirements.txt            # 📜 พิมพ์เขียวการติดตั้ง: รายการไลบรารีทั้งหมด
 
+#### **ขั้นตอนที่ 3: บันทึกและอัปโหลดขึ้น GitHub**
+
+หลังจากที่คุณวางเนื้อหาและ **Save** ไฟล์ `README.md` เรียบร้อยแล้ว ให้กลับไปที่ **Terminal** แล้วรัน 3 คำสั่งสุดท้ายนี้:
+
+```bash
+# 1. เตรียมไฟล์ README.md ที่แก้ไข
+git add README.md
+
+# 2. บันทึกการเปลี่ยนแปลง
+git commit -m "docs: Create comprehensive, architecturally-driven README"
+
+# 3. อัปเดตขึ้น GitHub
+git push
 ```
 
