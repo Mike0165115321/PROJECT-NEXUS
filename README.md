@@ -78,7 +78,11 @@
 3.  **สร้างฐานข้อมูล Knowledge Graph:**
     *   รันสคริปต์เพื่อสกัดข้อมูลความสัมพันธ์จากหนังสือและนำเข้าสู่ Neo4j:
         ```sh
-        python knowledge_extractor.py
+        #key LLM Gemini
+        python knowledge_extractor_gemini.py
+        #key LLM Grop
+        knowledge_extractor_llama.py
+        
         ```
 
 ### 4. รันแอปพลิเคชัน (Run the Application)
