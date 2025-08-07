@@ -1,14 +1,15 @@
 # core/graph_manager.py
-# (V2 - Cypher Ready)
+# (V2.1 - Read/Write Separation & Refined)
 
 from neo4j import GraphDatabase
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal
+
 from core.config import settings
 
 class GraphManager:
     """
     จัดการการเชื่อมต่อและค้นหาข้อมูลจากฐานข้อมูล Neo4j
-    รองรับทั้งการค้นหาแบบพื้นฐานและการรัน Cypher Query โดยตรง
+    (เวอร์ชันปรับปรุง: แยกเมธอด Read/Write ชัดเจนเพื่อความเสถียร)
     """
     def __init__(self):
         self.driver = None
@@ -28,19 +29,23 @@ class GraphManager:
     def close(self):
         if self.driver:
             self.driver.close()
-            print("🔗 สมองส่วนความเข้าใจเชิงโครงสร้าง (Neo4j) เชื่อมต่อสำเร็จ")
+            # [IMPROVEMENT] แก้ไขข้อความให้ชัดเจน
+            print("🔗 Graph Manager: Neo4j connection closed.")
 
-    def find_related_concepts(self, entity_id: str, limit: int = 5) -> List[Dict]:
-        """
-        (เมธอดอัปเกรด) ค้นหาความสัมพันธ์โดยใช้ 'id' ที่ผ่านการ Normalization แล้ว
-        """
+    # [IMPROVEMENT] เพิ่มพารามิเตอร์ direction เพื่อความยืดหยุ่น
+    def find_related_concepts(
+        self, 
+        entity_id: str, 
+        limit: int = 5, 
+        direction: Literal["out", "in", "both"] = "both"
+    ) -> List[Dict]:
         if not self.driver: return []
         normalized_id = entity_id.strip().lower()
         
-        print(f"📈 Graph Manager: Searching for neighbors of '{normalized_id}'...")
+        print(f"📈 Graph Manager: Searching for neighbors of '{normalized_id}' (direction: {direction})...")
         try:
             with self.driver.session() as session:
-                result = session.execute_read(self._find_neighbors_transaction, normalized_id, limit)
+                result = session.execute_read(self._find_neighbors_transaction, normalized_id, limit, direction)
             print(f"  -> Found {len(result)} related concepts.")
             return result
         except Exception as e:
@@ -48,9 +53,17 @@ class GraphManager:
             return []
 
     @staticmethod
-    def _find_neighbors_transaction(tx, entity_id, limit):
+    def _find_neighbors_transaction(tx, entity_id, limit, direction):
+        # [IMPROVEMENT] สร้างลูกศรของความสัมพันธ์ตาม direction ที่รับเข้ามา
+        if direction == "out":
+            arrow = "-[r]->"
+        elif direction == "in":
+            arrow = "<-[r]-"
+        else: # both
+            arrow = "-[r]-"
+            
         query = (
-            "MATCH (n {id: $entity_id})-[r]-(m) "
+            f"MATCH (n {{id: $entity_id}}){arrow}(m) "
             "RETURN n.name AS source, labels(n) AS source_labels, "
             "       type(r) AS relationship, "
             "       m.name AS target, labels(m) AS target_labels, "
@@ -60,34 +73,50 @@ class GraphManager:
         result = tx.run(query, entity_id=entity_id, limit=limit)
         return [dict(record) for record in result]
 
-    # --- 👇 **** เมธอดใหม่ที่ทรงพลังที่สุด **** 👇 ---
-    def execute_cypher(self, query: str, params: Dict[str, Any] = None) -> List[Dict]:
+    # [CRITICAL FIX] เปลี่ยนชื่อให้ชัดเจนว่าเป็น Read-only
+    def execute_read_query(self, query: str, params: Dict[str, Any] = None) -> List[Dict]:
         """
-        (เวอร์ชันปลอดภัย) รัน Cypher Query โดยใช้ Parameters เพื่อป้องกัน Injection
+        รัน Cypher Query ที่เป็นการอ่านข้อมูลเท่านั้น (Read-only).
         """
         if not self.driver or not query: 
             return []
         
-        # ใช้ params ที่ว่างเปล่าถ้าไม่ได้ส่งมา
-        if params is None:
-            params = {}
-            
-        print(f"⚡️ Graph Manager: Executing parameterized Cypher...")
-        print(f"   Query: {query}")
-        print(f"   Params: {params}")
+        params = params or {}
+        print(f"⚡️ Graph Manager: Executing READ query...")
         
         try:
             with self.driver.session() as session:
-                result = session.execute_read(self._run_query_transaction, query, params)
+                # ใช้ execute_read สำหรับการอ่าน
+                result = session.read_transaction(self._run_query_transaction, query, params)
             print(f"  -> Query returned {len(result)} records.")
             return result
         except Exception as e:
-            print(f"❌ Graph Manager: Error executing Cypher. Error: {e}")
-            # ส่งข้อความ Error ที่ชัดเจนกลับไปให้ AI เรียนรู้
-            return [{"error": f"Cypher Query Failed: {e}"}]
+            print(f"❌ Graph Manager: Error executing READ Cypher. Error: {e}")
+            return [{"error": f"Cypher Read Query Failed: {e}"}]
+
+    # [CRITICAL FIX] เพิ่มฟังก์ชันใหม่สำหรับการเขียนข้อมูล
+    def execute_write_query(self, query: str, params: Dict[str, Any] = None) -> List[Dict]:
+        """
+        รัน Cypher Query ที่มีการเขียน/แก้ไขข้อมูล (CREATE, MERGE, SET, DELETE).
+        """
+        if not self.driver or not query:
+            return []
+            
+        params = params or {}
+        print(f"⚡️ Graph Manager: Executing WRITE query...")
+
+        try:
+            with self.driver.session() as session:
+                # ใช้ execute_write สำหรับการเขียน
+                result = session.write_transaction(self._run_query_transaction, query, params)
+            print(f"  -> Write operation successful. Returned {len(result)} records.")
+            return result
+        except Exception as e:
+            print(f"❌ Graph Manager: Error executing WRITE Cypher. Error: {e}")
+            return [{"error": f"Cypher Write Query Failed: {e}"}]
 
     @staticmethod
     def _run_query_transaction(tx, query, params):
-        # ⭐️ tx.run จะจัดการกับการ Sanitize พารามิเตอร์ให้เราโดยอัตโนมัติ ⭐️
         result = tx.run(query, **params)
-        return [dict(record) for record in result]
+        # ใช้ .data() เป็นวิธีที่ทันสมัยและมีประสิทธิภาพกว่า list comprehension เล็กน้อย
+        return result.data()

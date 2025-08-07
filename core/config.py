@@ -11,48 +11,44 @@ load_dotenv()
 class Settings:
     GOOGLE_API_KEYS = [key.strip() for key in os.getenv("GOOGLE_API_KEYS", "").split(',') if key.strip()]
     GROQ_API_KEYS = [key.strip() for key in os.getenv("GROQ_API_KEYS", "").split(',') if key.strip()]
+    
+    UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
+   # ⭐️ สังกัด Google Gemini: ใช้ Flash เพื่อความเร็วและประสิทธิภาพด้านต้นทุน
+    PRIMARY_GEMINI_MODEL = "gemini-1.5-flash-latest"
+    
+    # 🚀 สังกัด Groq Llama 3:
+    PRIMARY_GROQ_MODEL = "llama3-70b-8192"
+    SECONDARY_GROQ_MODEL = "llama3-8b-8192"
 
-    # โมเดลต่างๆ ที่ใช้ในระบบ
-    # >> ใช้ใน `knowledge_extractor.py` (ทางเลือกสำหรับหนังสือที่ซับซ้อน) ⭐️ สับสวิตช์มาที่นี่ ⭐️
-    #KNOWLEDGE_EXTRACTOR_MODEL = os.getenv("KNOWLEDGE_EXTRACTOR_MODEL", "gemini-1.5-flash-latest")
-    KNOWLEDGE_EXTRACTOR_MODEL = os.getenv("KNOWLEDGE_EXTRACTOR_MODEL", "llama3-70b-8192")
+    # >> ETL Pipelines (Knowledge Extractor, RAG Builder)
+    KNOWLEDGE_EXTRACTOR_MODEL = os.getenv("KNOWLEDGE_EXTRACTOR_MODEL", PRIMARY_GEMINI_MODEL)
 
-    # >> ใช้ใน `agents/planning_mode/planner_agent.py`
-    PLANNER_AGENT_MODEL = os.getenv("PLANNER_AGENT_MODEL", "gemini-1.5-flash-latest")
-    
-    # >> ใช้ใน `agents/formatter_agent.py`
-    FORMATTER_AGENT_MODEL = os.getenv("FORMATTER_AGENT_MODEL", "gemini-1.5-flash-latest")
-    
-    # >> ใช้ใน `agents/counseling_mode/counselor_agent.py`
-    COUNSELOR_AGENT_MODEL = os.getenv("COUNSELOR_AGENT_MODEL", "gemini-1.5-flash-latest")
+    # >> 🧠 Gemini Agents: สำหรับงานที่ต้องการความสามารถรอบด้าน
+    # ⭐️ กลับมาใช้ Flash ทั้งหมด
+    PLANNER_AGENT_MODEL = os.getenv("PLANNER_AGENT_MODEL", PRIMARY_GEMINI_MODEL)
+    FORMATTER_AGENT_MODEL = os.getenv("FORMATTER_AGENT_MODEL", PRIMARY_GEMINI_MODEL)
+    COUNSELOR_AGENT_MODEL = os.getenv("COUNSELOR_AGENT_MODEL", PRIMARY_GEMINI_MODEL)
 
-    # --- 🚀 สังกัด Groq: Llama 3 (สำหรับความเร็วและความฉลาดที่สมดุล) ---
+    # >> 🚀 Groq Agents: สำหรับงานที่ต้องการการตอบสนองที่รวดเร็ว
+    
+    # โมเดลหลักสำหรับ "เฟิง" (สนทนา, เสนอ)
+    FENG_PRIMARY_MODEL = os.getenv("FENG_PRIMARY_MODEL", PRIMARY_GROQ_MODEL)
+    
+    # โมเดลสำหรับ "เฟิง" (วิเคราะห์เจตนา)
+    # ⭐️ [CRITICAL FIX] ยังคงใช้ 70B เพื่อแก้ปัญหา Triage failed อย่างถาวร
+    FENG_SECONDARY_MODEL = os.getenv("FENG_SECONDARY_MODEL", PRIMARY_GROQ_MODEL)
 
-    # >> โมเดลหลักสำหรับ "เฟิง" (สนทนา, เสนอ) และ "นักข่าว"
-    # >> ใช้ใน `agents/feng_mode/*_agent.py` และ `agents/news_mode/news_agent.py`
-    FENG_PRIMARY_MODEL = os.getenv("FENG_PRIMARY_MODEL", "llama3-70b-8192")
-    NEWS_AGENT_MODEL = os.getenv("NEWS_AGENT_MODEL", "llama3-70b-8192")
+    # โมเดลสำหรับ "นักข่าว"
+    NEWS_AGENT_MODEL = os.getenv("NEWS_AGENT_MODEL", FENG_PRIMARY_MODEL)
+
+    # >> ⚙️ Utility Agents: สำหรับงานเบื้องหลังที่ไม่ซับซ้อน
+    # เราเลือก Groq 8B เพื่อความเร็วและประหยัด
+    DEFAULT_UTILITY_MODEL = SECONDARY_GROQ_MODEL
     
-    # >> โมเดลรองสำหรับ "เฟิง" (วิเคราะห์เจตนา)
-    # >> ใช้ใน `agents/feng_mode/feng_agent.py`
-    FENG_SECONDARY_MODEL = os.getenv("FENG_SECONDARY_MODEL", "llama3-8b-8192")
-    
-    # >> โมเดลเริ่มต้นสำหรับเครื่องมือและงานเบื้องหลังทั้งหมด
-    DEFAULT_UTILITY_MODEL = "llama3-8b-8192"
-    
-    # >> ใช้ใน `agents/coder_mode/code_interpreter_agent.py`
     CODE_AGENT_MODEL = os.getenv("CODE_AGENT_MODEL", DEFAULT_UTILITY_MODEL)
-    
-    # >> ใช้ใน `agents/consultant_mode/librarian_agent.py`
     LIBRARIAN_AGENT_MODEL = os.getenv("LIBRARIAN_AGENT_MODEL", DEFAULT_UTILITY_MODEL)
-    
-    # >> ใช้ใน `core/long_term_memory_manager.py`
-    LTM_MODEL = os.getenv("LTM_MODEL", DEFAULT_UTILITY_MODEL)
-
-    # >> ใช้ใน `agents/storytelling_mode/listener_agent.py`
+    LTM_MODEL = os.getenv("LTM_MODEL", DEFAULT_UTILITY_MODEL) # สำหรับ manage_memory.py
     LISTENER_AGENT_MODEL = os.getenv("LISTENER_AGENT_MODEL", DEFAULT_UTILITY_MODEL)
-
-    # >> ใช้ใน `agents/utility_mode/apology_agent.py`
     APOLOGY_AGENT_MODEL = os.getenv("APOLOGY_AGENT_MODEL", DEFAULT_UTILITY_MODEL)
 
     NEO4J_URI = os.getenv("NEO4J_URI")

@@ -1,7 +1,8 @@
 # agents/feng_mode/proactive_offer_agent.py
-# (V1 - The Reflective Sage)
+# (V2 - The Sage with Sharpened Intuition)
 
-from typing import Dict, Any
+import json
+from typing import Dict, Any, List
 from groq import Groq
 
 class ProactiveOfferAgent:
@@ -14,6 +15,7 @@ class ProactiveOfferAgent:
         self.model_name = model_name
         self.rag_engine = rag_engine
         self.graph_manager = graph_manager
+        self.persona_prompt = persona_prompt
         
         self.proactive_offer_prompt = persona_prompt + """
 **ภารกิจ: ปราชญ์ผู้ร่วมไตร่ตรอง (The Reflective Sage)**
@@ -40,58 +42,77 @@ class ProactiveOfferAgent:
 """
         print("🤔 Proactive Offer Agent (V1 - Sage) is ready.")
 
-    def _get_intuitive_context(self, query: str) -> str:
-        """
-        ใช้ KG-RAG เพื่อดึง "สัญชาตญาณ" จากความทรงจำและกราฟความรู้
-        """
-        contexts = []
-        if self.rag_engine and hasattr(self.rag_engine, 'search_memory'):
-            try:
-                memory_results = self.rag_engine.search_memory(query, top_k=1)
-                if memory_results:
-                    contexts.append("\n".join([f"- ความทรงจำที่เกี่ยวข้อง: {mem.get('text', '')}" for mem in memory_results]))
-            except Exception as e:
-                print(f"  - Intuition (Memory RAG) Error: {e}")
+    def _extract_keywords_for_graph(self, query: str) -> List[str]:
+        """[NEW TOOL] ใช้ LLM (8B) เพื่อสกัด Keywords สำหรับค้นหากราฟโดยเฉพาะ"""
+        print(f"  - 🧠 Extracting keywords from: '{query}' for graph search...")
+        prompt = f"""
+คุณคือ AI ผู้เชี่ยวชาญด้านการสกัด "คำสำคัญ" จากประโยค เพื่อใช้ในการค้นหาฐานข้อมูล Knowledge Graph
 
-        if self.graph_manager:
-            try:
-                graph_results = self.graph_manager.find_related_concepts(query, limit=2)
-                if graph_results:
-                    contexts.append("\n".join([f"- ความเชื่อมโยงที่เกี่ยวข้อง: '{rel.get('source')}' {rel.get('relationship')} '{rel.get('target')}'" for rel in graph_results]))
-            except Exception as e:
-                print(f"  - Intuition (Graph) Error: {e}")
+**กฎ:**
+1.  อ่าน "ประโยค" และจับใจความถึง "แนวคิดหลัก"
+2.  สกัดเฉพาะ "แนวคิดหลัก" หรือ "คำนาม" ที่สำคัญที่สุดออกมา 2-3 คำ
+3.  ตอบกลับเป็น JSON Array ของ Strings เท่านั้น
+
+**ประโยค:** "{query}"
+**Keywords (JSON Array):**
+"""
+        try:
+            api_key = self.key_manager.get_key()
+            client = Groq(api_key=api_key)
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model="llama3-8b-8192", # ใช้โมเดルเล็กและเร็วสำหรับงานนี้
+                response_format={"type": "json_object"}
+            )
+            keywords = json.loads(chat_completion.choices[0].message.content)
+            if isinstance(keywords, list):
+                print(f"  -> Keywords for graph: {keywords}")
+                return keywords
+            return []
+        except Exception as e:
+            print(f"  - ⚠️ Keyword extraction failed: {e}")
+            return []
+
+    def _get_intuitive_context(self, query: str) -> str:
+        # [CRITICAL FIX] ใช้ Keywords ที่สกัดได้ในการค้นหา
+        keywords = self._extract_keywords_for_graph(query)
+        if not keywords:
+            return "ไม่มี"
+
+        contexts = []
+        found_ids = set()
+        print(f"  - 🕸️ Searching Graph with keywords: {keywords}")
+        for keyword in keywords:
+            possible_ids = [f"concept:{kw.replace(' ', '-')}" for kw in keyword.split()] + [keyword]
+            for entity_id in possible_ids:
+                try:
+                    graph_results = self.graph_manager.find_related_concepts(entity_id, limit=2)
+                    for rel in graph_results:
+                        target_id = rel.get('target_id')
+                        if target_id and target_id not in found_ids:
+                            contexts.append(f"- ความเชื่อมโยงที่เกี่ยวข้อง: '{rel.get('source')}' {rel.get('relationship')} '{rel.get('target')}'")
+                            found_ids.add(target_id)
+                except Exception as e:
+                    print(f"  - Graph Search Error for '{entity_id}': {e}")
         
         return "\n".join(contexts) if contexts else "ไม่มี"
 
     def handle(self, query: str) -> Dict[str, Any]:
-        """
-        เมธอดหลักที่ Dispatcher จะเรียกใช้
-        """
         print(f"🤔 [Proactive Offer Agent] Handling: '{query[:40]}...'")
         api_key = self.key_manager.get_key()
-        if not api_key:
-            return {"type": "escalate", "content": query}
-
+        if not api_key: return {"type": "escalate", "content": query}
         try:
             client = Groq(api_key=api_key)
             intuitive_context = self._get_intuitive_context(query)
-            
-            prompt = self.proactive_offer_prompt.format(
-                intuitive_context=intuitive_context,
-                query=query
-            )
+            prompt = self.proactive_offer_prompt.format(intuitive_context=intuitive_context, query=query)
             
             chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}], model=self.model_name
             )
             proactive_answer = chat_completion.choices[0].message.content.strip()
             
-            return {
-                "type": "proactive_offer", 
-                "content": proactive_answer,
-                "original_query": query
-            }
+            return {"type": "proactive_offer", "content": proactive_answer, "original_query": query}
         except Exception as e:
             print(f"❌ ProactiveOfferAgent LLM Error: {e}")
+            if api_key: self.key_manager.report_failure(api_key)
             return {"type": "escalate", "content": query}

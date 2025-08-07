@@ -49,6 +49,10 @@ class Dispatcher:
             intent = dispatch_order.get("intent")
             corrected_query = dispatch_order.get("corrected_query")
 
+            if intent == "PLANNER_REQUEST":
+                print(f"🚦 Dispatcher: High-priority intent '{intent}' detected. Routing directly to Planner.")
+                return await self._run_deep_analysis(corrected_query, user_id)
+
             intent_to_agent_map = {
                 "GENERAL_CONVERSATION": "GENERAL_HANDLER",
                 "DEEP_ANALYSIS_REQUEST": "PROACTIVE_OFFER_HANDLER",

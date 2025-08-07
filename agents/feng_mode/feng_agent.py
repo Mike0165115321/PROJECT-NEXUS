@@ -1,103 +1,110 @@
 # agents/feng_mode/feng_agent.py
-# (V6 - The Final Intelligent Triage Unit)
+# [V11 - THE SURGICAL STRIKE: UNIFIED TRIAGE & KEYWORD EXTRACTION]
 
 import random
 import json
+import re
 from rapidfuzz import process, fuzz
 from typing import Optional, Dict, List, Any
-from groq import Groq
+import google.generativeai as genai
+from core.api_key_manager import ApiKeyManager
 
 class FengAgent:
-    """
-    Agent ที่ทำหน้าที่เป็น "หน่วยคัดกรองอัจฉริยะ" (Intelligent Triage Unit)
-    รับผิดชอบการแก้ไขคำผิด, วิเคราะห์เจตนา, และส่งมอบ "แฟ้มงาน" ให้ Dispatcher
-    """
-    def __init__(self, key_manager, primary_model_name: str, secondary_model_name: str, 
+    def __init__(self, key_manager: ApiKeyManager, model_name: str, 
                  rag_engine, graph_manager, persona_prompt: str):
         self.key_manager = key_manager
-        self.primary_model = primary_model_name      # (70B) สำหรับงานที่ซับซ้อนในอนาคต
-        self.secondary_model = secondary_model_name  # (8B) สำหรับงานคัดกรอง
+        self.model_name = model_name
         self.rag_engine = rag_engine
         self.graph_manager = graph_manager
         self.persona_prompt = persona_prompt
-        
         self.intent_analysis_prompt = """
-คุณคือ "บรรณาธิการด่านหน้า" และ "ผู้วิเคราะห์เจตนา" ของระบบ AI "เฟิง"
+คุณคือ AI ด้านการประมวลผลข้อมูล ทำหน้าที่แปลงข้อความของผู้ใช้ให้เป็น JSON ที่มีโครงสร้างตายตัวเท่านั้น
 
-**ภารกิจของคุณมี 2 ขั้นตอน (Chain of Thought):**
+**ภารกิจ:**
+วิเคราะห์ "คำถามดิบ" ของผู้ใช้ และสร้าง JSON object ที่มี 2 key เท่านั้น:
+1.  `corrected_query`: คือ "คำถามดิบ" ที่ผ่านการแก้ไขคำผิดและปรับภาษาให้ถูกต้องแล้ว
+2.  `intent`: คือ ประเภทเจตนาที่วิเคราะห์ได้จากรายการนี้:
+    - `GENERAL_CONVERSATION`: การทักทาย, ขอบคุณ, ถามเรื่องส่วนตัว
+    - `PLANNER_REQUEST`: **การร้องขอที่ซับซ้อน, ต้องการการวิเคราะห์, เปรียบเทียบ, วางแผน, หรือคำถามที่ขึ้นต้นด้วย "ทำไม", "อย่างไร", "วิเคราะห์", "เปรียบเทียบ"**
+    - `DEEP_ANALYSIS_REQUEST`: การร้องขอความรู้ทั่วไป, ขอคำนิยาม, ถามข้อมูลที่ไม่ซับซ้อน
+    - `NEWS_REQUEST`, `CODE_REQUEST`, `IMAGE_REQUEST`, `LIBRARIAN_REQUEST`, `SYSTEM_COMMAND`, `COUNSELING_REQUEST`, `USER_STORYTELLING`
 
-**ขั้นตอนที่ 1: การแก้ไขและทำความเข้าใจ (Correction & Understanding)**
-- อ่าน "คำถามดิบของผู้ใช้" และแก้ไขคำที่อาจจะพิมพ์ผิด เพื่อให้ได้ "คำถามที่ถูกต้อง"
-
-**ขั้นตอนที่ 2: การวิเคราะห์และจำแนกประเภท (Analysis & Classification)**
-- นำ "คำถามที่ถูกต้อง" มาวิเคราะห์เจตนา และจำแนกออกเป็นหนึ่งในประเภทต่อไปนี้เท่านั้น:
-    1.  `GENERAL_CONVERSATION`: การทักทาย, อำลา, ขอบคุณ, คำถามเกี่ยวกับตัวตนของ "เฟิง"
-    2.  `DEEP_ANALYSIS_REQUEST`: การร้องขอความรู้, การวิเคราะห์, การเปรียบเทียบ, แนวคิดเชิงลึก
-    3.  `NEWS_REQUEST`: การร้องขอข่าวสาร
-    4.  `CODE_REQUEST`: การร้องขอเกี่ยวกับโค้ด
-    5.  `IMAGE_REQUEST`: การร้องขอรูปภาพ
-    6.  `LIBRARIAN_REQUEST`: การร้องขอรายชื่อหนังสือ, หมวดหมู่, หรือคำแนะนำ
-    7.  `SYSTEM_COMMAND`: คำสั่งเกี่ยวกับระบบปฏิบัติการ
-    8.  `COUNSELING_REQUEST`: ผู้ใช้แสดงความรู้สึกเชิงลบหรือขอคำปรึกษาด้านอารมณ์
-    9.  `USER_STORYTELLING`: ผู้ใช้กำลังจะเล่าเรื่องราว หรือให้ข้อมูล
-
-**ผลลัพธ์สุดท้าย (Final Output):**
-- คุณต้องตอบกลับมาเป็น JSON object ที่มีโครงสร้างนี้เท่านั้น
-
-**โครงสร้าง JSON:**
-{
-  "corrected_query": "คำถามที่ผ่านการแก้ไขและทำความเข้าใจแล้ว",
-  "intent": "ประเภทของเจตนาที่วิเคราะห์ได้จากรายการข้างบน"
-}
+**กฎเหล็ก:**
+- **ต้องใช้ Key ภาษาอังกฤษ (`corrected_query`, `intent`) เท่านั้น**
+- **ต้องตอบกลับเป็น JSON object ที่สมบูรณ์แบบเท่านั้น**
 
 **ตัวอย่าง:**
-- คำถามดิบของผู้ใช้: "สัวสดี"
-  - ผลลัพธ์ JSON: { "corrected_query": "สวัสดี", "intent": "GENERAL_CONVERSATION" }
-- คำถามดิบของผู้ใช้: "อธิบานเรื่อง Antifragile ที"
-  - ผลลัพธ์ JSON: { "corrected_query": "อธิบายเรื่อง Antifragile ที", "intent": "DEEP_ANALYSIS_REQUEST" }
-- คำถามดิบของผู้ใช้: "ผมรู้สึกแย่มากเลยช่วงนี้"
-  - ผลลัพธ์ JSON: { "corrected_query": "ผมรู้สึกแย่มากเลยช่วงนี้", "intent": "COUNSELING_REQUEST" }
-- คำถามดิบของผู้ใช้: "เรื่องมันมีอยู่ว่า..."
-  - ผลลัพธ์ JSON: { "corrected_query": "เรื่องมันมีอยู่ว่า...", "intent": "USER_STORYTELLING" }
+- คำถามดิบ: "วิเคราะห์ข้อดีข้อเสียของ Stoicism กับ Epicureanism ให้หน่อย"
+- ผลลัพธ์ JSON:
+{
+  "corrected_query": "วิเคราะห์ข้อดีข้อเสียของ Stoicism กับ Epicureanism ให้หน่อย",
+  "intent": "PLANNER_REQUEST"
+}
+- คำถามดิบ: "ขอรายละเอียดเรื่อง The Art of War"
+- ผลลัพธ์ JSON:
+{
+  "corrected_query": "ขอรายละเอียดเรื่อง The Art of War",
+  "intent": "DEEP_ANALYSIS_REQUEST"
+}
 
-**คำถามดิบของผู้ใช้:** "{query}"
+**คำถามดิบ:** "{query}"
 **ผลลัพธ์ JSON:**
 """
-        print("👤 หน่วยคัดกรองด่านหน้า (FengAgent) เข้าประจำตำแหน่งที่ประตูเมือง")
+        print("👤 หน่วยคัดกรองด่านหน้า (FengAgent) [SURGICAL STRIKE] เข้าประจำตำแหน่ง")
 
     def _get_quick_response(self, query: str) -> Optional[str]:
-        """
-        ตรวจสอบ query กับชุดคำตอบสำเร็จรูปเพื่อการตอบสนองที่รวดเร็ว
-        """
+        # (เหมือนเดิม)
         q_lower = query.lower().strip()
         for item in QUICK_RESPONSES:
-            result = process.extractOne(q_lower, item["questions"], scorer=fuzz.ratio, score_cutoff=92)
-            if result:
-                print(f"⚡️ [Feng Quick Response] Matched '{result[0]}'.")
+            if process.extractOne(q_lower, item["questions"], scorer=fuzz.ratio, score_cutoff=92):
                 return random.choice(item["answers"])
         return None
 
-    def _classify_intent(self, query: str) -> Dict[str, str]:
-        print(f"🤔 [Feng Triage] Correcting and classifying query with '{self.secondary_model}'...")
+    def _extract_json(self, text: str) -> Optional[Dict]:
+        # (เหมือนเดิม)
+        match = re.search(r'```(json)?\s*(\{[\s\S]*?\})\s*```', text, re.DOTALL)
+        if match:
+            try: return json.loads(match.group(2))
+            except json.JSONDecodeError: pass
+        try:
+            start = text.find('{'); end = text.rfind('}') + 1
+            if start != -1 and end != 0: return json.loads(text[start:end])
+        except (json.JSONDecodeError, IndexError): pass
+        return None
+
+    def _classify_intent_and_extract_keywords(self, query: str) -> Dict[str, Any]:
+        print(f"🤔 [Feng Triage] Analyzing and extracting from query with '{self.model_name}'...")
         api_key = self.key_manager.get_key()
-        fallback_response = {"corrected_query": query, "intent": "DEEP_ANALYSIS_REQUEST"}
+        fallback_response = {"corrected_query": query, "intent": "DEEP_ANALYSIS_REQUEST", "keywords": query.split()}
         if not api_key: return fallback_response
 
+        raw_response = ""
         try:
-            client = Groq(api_key=api_key)
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel(self.model_name)
             prompt = self.intent_analysis_prompt.format(query=query)
             
-            chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=self.secondary_model,
-                response_format={"type": "json_object"},
-            )
+            safety_settings = [
+                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+            ]
             
-            json_response = json.loads(chat_completion.choices[0].message.content)
-            print(f"  -> Corrected Query: '{json_response.get('corrected_query')}', Intent: {json_response.get('intent')}")
-            return json_response
+            response = model.generate_content(prompt, safety_settings=safety_settings)
+            raw_response = response.text
+            json_response = self._extract_json(raw_response)
+            
+            if json_response and "corrected_query" in json_response and "intent" in json_response and "keywords" in json_response:
+                 print(f"  -> Triage successful. Intent: {json_response.get('intent')}, Keywords: {json_response.get('keywords')}")
+                 return json_response
+            else:
+                raise ValueError("Could not parse a valid JSON with all required keys.")
+
         except Exception as e:
-            print(f"  -> Triage failed: {e}. Defaulting to DEEP_ANALYSIS_REQUEST.")
+            print(f"  -> Triage failed: {e}")
+            print(f"  -> RAW FAILED RESPONSE FROM GEMINI: '{raw_response}'")
+            if api_key: self.key_manager.report_failure(api_key)
             return fallback_response
 
     def handle(self, query: str, short_term_memory: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -105,15 +112,17 @@ class FengAgent:
         if quick_answer:
             return {"type": "final_answer", "content": quick_answer}
 
-        analysis_result = self._classify_intent(query)
+        # เรียกฟังก์ชันที่อัปเกรดแล้ว
+        analysis_result = self._classify_intent_and_extract_keywords(query)
         
-        print(f"🛡️ [Feng Triage] Passing dispatch order to Dispatcher. Intent: '{analysis_result.get('intent')}'")
+        print(f"🛡️ [Feng Triage] Passing complete dispatch order to Dispatcher.")
+        # ส่ง "แฟ้มงานที่สมบูรณ์" ที่มีทุกอย่างแล้ว
         return {
             "type": "dispatch_order",
             "intent": analysis_result.get("intent"),
-            "corrected_query": analysis_result.get("corrected_query", query)
+            "corrected_query": analysis_result.get("corrected_query", query),
+            "keywords": analysis_result.get("keywords", [])
         }
-
 
 
 QUICK_RESPONSES = [

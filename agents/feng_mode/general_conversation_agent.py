@@ -1,17 +1,18 @@
 # agents/feng_mode/general_conversation_agent.py
-# (V1 - The Intellectual Companion)
+# (V2 - The Sage's Companion)
 
+import json
 from typing import Dict, List, Any
 from groq import Groq
 
 class GeneralConversationAgent:
     """
     Agent ที่รับผิดชอบการสนทนาทั่วไปทั้งหมด (GENERAL_CONVERSATION)
-    ทำหน้าที่เป็น "สหายทางปัญญา" และ "เจ้าบ้าน" ของระบบ
+    (เวอร์ชันอัปเกรด: มีสัญชาตญาณที่เฉียบคมขึ้น)
     """
     def __init__(self, key_manager, model_name: str, rag_engine, graph_manager, persona_prompt: str):
         self.key_manager = key_manager
-        self.model_name = model_name # นี่คือ Llama 3 70B
+        self.model_name = model_name
         self.rag_engine = rag_engine
         self.graph_manager = graph_manager
         
@@ -51,26 +52,68 @@ class GeneralConversationAgent:
 """
         print("🤝 General Conversation Agent (V1 - Companion) is ready.")
 
+    def _extract_keywords_for_intuition(self, query: str) -> List[str]:
+        """ใช้ LLM (โมเดลเล็ก) เพื่อสกัด Keywords สำหรับการค้นหากราฟ"""
+        print(f"  - 🧠 Extracting keywords from: '{query}' for intuition...")
+        prompt = f"""
+คุณคือ AI ผู้เชี่ยวชาญด้านการสกัด "คำสำคัญ" (Keywords) จากประโยค เพื่อใช้ในการค้นหาฐานข้อมูล Knowledge Graph
+
+**กฎ:**
+1.  อ่าน "ประโยค" ที่ให้มา และจับใจความถึง "แนวคิดหลัก"
+2.  สกัดเฉพาะ "แนวคิดหลัก" หรือ "คำนาม" ที่สำคัญที่สุดออกมา 2-3 คำ
+3.  ตอบกลับเป็น JSON Array ของ Strings เท่านั้น (เช่น ["คำที่ 1", "คำที่ 2"])
+
+**ประโยคที่ต้องวิเคราะห์:** "{query}"
+**Keywords (JSON Array):**
+"""
+        try:
+            api_key = self.key_manager.get_key()
+            client = Groq(api_key=api_key)
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model="llama3-8b-8192", # ใช้โมเดลเล็กและเร็วสำหรับงานนี้เสมอ
+                response_format={"type": "json_object"}
+            )
+            keywords = json.loads(chat_completion.choices[0].message.content)
+            if isinstance(keywords, list) and all(isinstance(k, str) for k in keywords):
+                print(f"  -> Keywords extracted for intuition: {keywords}")
+                return keywords
+            return []
+        except Exception:
+            return [word for word in query.split() if len(word) > 3]
+
+    # [UPGRADE] อัปเกรดฟังก์ชันนี้ให้ใช้ Keywords
     def _get_intuitive_context(self, query: str) -> str:
         """
-        ใช้ KG-RAG เพื่อดึง "สัญชาตญาณ" จากความทรงจำและกราฟความรู้
+        ใช้ Keywords ที่สกัดได้ เพื่อดึง "สัญชาตญาณ" จากความทรงจำและกราฟความรู้
         """
-        contexts = []
-        if self.rag_engine and hasattr(self.rag_engine, 'search_memory'):
-            try:
-                memory_results = self.rag_engine.search_memory(query, top_k=1)
-                if memory_results:
-                    contexts.append("\n".join([f"- ความทรงจำที่เกี่ยวข้อง: {mem.get('text', '')}" for mem in memory_results]))
-            except Exception as e:
-                print(f"  - Intuition (Memory RAG) Error: {e}")
+        # 1. สกัด Keywords ก่อน
+        keywords = self._extract_keywords_for_intuition(query)
+        if not keywords:
+            return "ไม่มี"
 
-        if self.graph_manager:
-            try:
-                graph_results = self.graph_manager.find_related_concepts(query, limit=2)
-                if graph_results:
-                    contexts.append("\n".join([f"- ความเชื่อมโยงที่เกี่ยวข้อง: '{rel.get('source')}' {rel.get('relationship')} '{rel.get('target')}'" for rel in graph_results]))
-            except Exception as e:
-                print(f"  - Intuition (Graph) Error: {e}")
+        contexts = []
+
+        # 2. ใช้ Keywords ค้นหาใน Graph
+        print(f"  - 🕸️ Searching Graph with keywords: {keywords}")
+        found_ids = set()
+        for keyword in keywords:
+            # สร้าง ID ที่คาดว่าจะเป็นไปได้
+            possible_ids = [
+                f"concept:{keyword.replace(' ', '-')}",
+                f"book:{keyword.replace(' ', '-')}",
+                f"technique:{keyword.replace(' ', '-')}"
+            ]
+            for entity_id in possible_ids:
+                try:
+                    graph_results = self.graph_manager.find_related_concepts(entity_id, limit=2)
+                    for rel in graph_results:
+                        target_id = rel.get('target_id')
+                        if target_id and target_id not in found_ids:
+                            contexts.append(f"- ความเชื่อมโยงที่เกี่ยวข้อง: '{rel.get('source')}' {rel.get('relationship')} '{rel.get('target')}'")
+                            found_ids.add(target_id)
+                except Exception as e:
+                    print(f"  - Intuition (Graph) Error for '{entity_id}': {e}")
         
         return "\n".join(contexts) if contexts else "ไม่มี"
 
@@ -85,6 +128,7 @@ class GeneralConversationAgent:
 
         try:
             client = Groq(api_key=api_key)
+            # [UPGRADE] ตอนนี้ intuitive_context จะมีข้อมูลที่ถูกต้องแล้ว
             intuitive_context = self._get_intuitive_context(query)
             history_context = "\n".join([f"- {mem.get('role')}: {mem.get('content')}" for mem in short_term_memory])
             
@@ -101,4 +145,5 @@ class GeneralConversationAgent:
             return chat_completion.choices[0].message.content.strip()
         except Exception as e:
             print(f"❌ GeneralConversationAgent LLM Error: {e}")
+            if api_key: self.key_manager.report_failure(api_key)
             return "ขออภัยครับ เกิดข้อผิดพลาดในการสนทนา"

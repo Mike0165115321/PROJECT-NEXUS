@@ -145,7 +145,6 @@ def build_news_index(articles: List[Dict]):
     index = faiss.IndexFlatL2(embeddings.shape[1])
     index.add(embeddings)
     
-    # เพิ่ม embedding_text เข้าไปใน mapping เพื่อให้ RAGEngine ใช้งานได้
     mapping = {}
     for i, article in enumerate(articles):
         article['embedding_text'] = texts_to_embed[i]
