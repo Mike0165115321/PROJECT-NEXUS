@@ -28,7 +28,7 @@
 1.  **Clone Repository:**
     ```sh
     git clone https://github.com/Mike0165115321/My_AI_PROJECT-NEXUS.git
-    cd My_AI_PROJECT-NEXUS
+    cd PROJECT-NEXUS
     ```
 
 2.  **สร้างและเปิดใช้งาน Virtual Environment:**
