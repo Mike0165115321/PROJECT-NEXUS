@@ -41,7 +41,7 @@ class LibrarianAgent:
 """
         print("📚 Librarian Agent (V3 - Recommender) is on duty.")
 
-    def handle(self, query: str) -> str or None:
+    def handle(self, query: str) -> str | None:
         q_lower = query.lower().strip()
 
         if "มีหนังสืออะไรบ้าง" in q_lower or "รายชื่อหนังสือ" in q_lower:
