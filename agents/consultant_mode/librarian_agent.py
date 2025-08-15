@@ -44,7 +44,6 @@ class LibrarianAgent:
     def handle(self, query: str) -> str or None:
         q_lower = query.lower().strip()
 
-        # --- Use Case 1: ถามรายชื่อหนังสือทั้งหมด ---
         if "มีหนังสืออะไรบ้าง" in q_lower or "รายชื่อหนังสือ" in q_lower:
             print("📚 Librarian Agent: Handling 'list all books' request.")
             all_titles = self.rag_engine.get_all_book_titles()
