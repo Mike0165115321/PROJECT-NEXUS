@@ -10,18 +10,17 @@ from pydantic import BaseModel
 import os
 import traceback
 from contextlib import asynccontextmanager
+from sentence_transformers import SentenceTransformer, CrossEncoder
+import torch
 # --- ส่วนของ Core ---
 from core.config import settings
 from core.dispatcher import Dispatcher, FinalResponse
 from core.rag_engine import RAGEngine
-from core.news_cache_manager import NewsCacheManager
 from core.memory_manager import MemoryManager
 from core.long_term_memory_manager import LongTermMemoryManager
 from core.api_key_manager import ApiKeyManager
 from core.graph_manager import GraphManager
 from core.groq_key_manager import GroqApiKeyManager
-from core.kg_rag_engine import KGRAGEngine
-from core.news_rag_engine import NewsRAGEngine
 # --- ส่วนของ Agents ---
 from agents.planning_mode.planner_agent import PlannerAgent
 from agents.formatter_agent import FormatterAgent
@@ -50,28 +49,35 @@ async def lifespan(app: FastAPI):
     try:
         google_key_manager = ApiKeyManager(all_google_keys=settings.GOOGLE_API_KEYS, silent=True)
         groq_key_manager = GroqApiKeyManager(all_groq_keys=settings.GROQ_API_KEYS, silent=True)
-        rag_engine_instance = RAGEngine(memory_index_path="data/memory_index")
-        news_cache_manager_instance = NewsCacheManager()
-        GRAPH_MANAGER = GraphManager()
+        
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"--- 🧠 Initializing Central Armory on {device.upper()} (Stable FP32 Mode) ---")
+        
+        embedder_instance = SentenceTransformer("intfloat/multilingual-e5-large", device=device)
+        reranker_instance = CrossEncoder("BAAI/bge-reranker-base", device=device)
+        print("  - ✅ Embedding and Reranking models loaded successfully.")
+        rag_engine_instance = RAGEngine(
+            embedder=embedder_instance,
+            reranker=reranker_instance
+        )
+        
         memory_manager_instance = MemoryManager()
-        kg_rag_engine_instance = KGRAGEngine()
-        news_rag_engine_instance = NewsRAGEngine()
 
         print("--- 👁 เฟิงกำลังจะตื่น..... ---")
-        print("--- 🚀 Initializing Project Nexus Server (V4.0 - Conductor Arch) ---")
+
         AGENTS = {
             "MEMORY": memory_manager_instance,
             "SYSTEM": SystemAgent(),
             "REPORTER": ReporterAgent(),
-            "IMAGE": ImageAgent(unsplash_key=settings.UNSPLASH_ACCESS_KEY),
+            "IMAGE": ImageAgent(
+                unsplash_key=settings.UNSPLASH_ACCESS_KEY,
+                key_manager=groq_key_manager,
+                model_name=settings.DEFAULT_UTILITY_MODEL
+            ),
             "APOLOGY": ApologyAgent(
                 key_manager=groq_key_manager,
                 model_name=settings.APOLOGY_AGENT_MODEL,
                 persona_prompt=FENG_PERSONA_PROMPT
-            ),
-            "LTM": LongTermMemoryManager(
-                embedding_model="intfloat/multilingual-e5-large",
-                index_dir="data/memory_index"
             ),
             "FENG": FengAgent(
                 key_manager=google_key_manager,
@@ -81,13 +87,13 @@ async def lifespan(app: FastAPI):
             "GENERAL_HANDLER": GeneralConversationAgent(
                 key_manager=groq_key_manager,
                 model_name=settings.FENG_PRIMARY_MODEL,
-                kg_rag_engine=kg_rag_engine_instance,
+                rag_engine=rag_engine_instance,
                 persona_prompt=FENG_PERSONA_PROMPT
             ),
             "PROACTIVE_OFFER_HANDLER": ProactiveOfferAgent(
                 key_manager=groq_key_manager,
                 model_name=settings.FENG_PRIMARY_MODEL,
-                kg_rag_engine=kg_rag_engine_instance,
+                rag_engine=rag_engine_instance,
                 persona_prompt=FENG_PERSONA_PROMPT
             ),
             "COUNSELOR": CounselorAgent(
@@ -120,7 +126,7 @@ async def lifespan(app: FastAPI):
             "NEWS": NewsAgent(
                 key_manager=groq_key_manager, 
                 model_name=settings.NEWS_AGENT_MODEL,
-                news_rag_engine=news_rag_engine_instance,
+                rag_engine=rag_engine_instance,
                 persona_prompt=FENG_PERSONA_PROMPT
             ),
             "FORMATTER": FormatterAgent(

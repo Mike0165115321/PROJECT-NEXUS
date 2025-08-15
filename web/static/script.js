@@ -67,10 +67,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const userText = userInput.value.trim();
         if (!userText) return;
 
-        addMessageToLog(userText, 'user');
+        addMessageToLog({ text: userText }, 'user'); 
         userInput.value = '';
         setThinkingState(true);
         clearThoughtProcess();
+        
+        const promptsContainer = document.getElementById('suggested-prompts-container');
+        if (promptsContainer && typeof promptsContainer.hidePrompts === 'function') {
+            promptsContainer.hidePrompts();
+        }
         
         try {
             const data = await getFengResponseFromAPI(userText);
@@ -82,33 +87,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearThoughtProcess("ไม่มีข้อมูลเบื้องหลังสำหรับคำตอบนี้");
             }
 
-            if (data && data.answer) {
-                addMessageToLog(data.answer, 'feng'); 
-                playFengsVoice(data.answer);
-            } else {
-                 addMessageToLog(data?.answer || 'ขออภัยครับ มีการตอบกลับที่ผิดพลาด', 'feng');
+            if (data) {
+                const messageData = {
+                    text: data.answer || 'ขออภัยครับ มีการตอบกลับที่ผิดพลาด',
+                    image: data.image || null
+                };
+                addMessageToLog(messageData, 'feng'); 
+                playFengsVoice(messageData.text);
             }
 
         } catch (error) {
             console.error("Critical error in handleUserSubmit:", error);
-            addMessageToLog("ขออภัยครับ เกิดข้อผิดพลาดร้ายแรง โปรดตรวจสอบ Console", 'feng');
+            addMessageToLog({ text: "ขออภัยครับ เกิดข้อผิดพลาดร้ายแรง โปรดตรวจสอบ Console" }, 'feng');
         } finally {
             setThinkingState(false);
+            if (promptsContainer && typeof promptsContainer.displayNewPrompts === 'function') {
+                promptsContainer.displayNewPrompts();
+            }
         }
     };
     
-    const addMessageToLog = (text, sender) => {
+    const addMessageToLog = (messageData, sender) => {
         const messageContainer = document.createElement('div');
         messageContainer.classList.add('message', `${sender}-message`);
-        const messageText = document.createElement('p');
 
-        if (sender === 'feng' && window.marked) {
-            messageText.innerHTML = window.marked.parse(text);
-        } else {
-            messageText.textContent = text;
+        if (messageData.text) {
+            const messageText = document.createElement('div'); 
+            if (sender === 'feng' && window.marked) {
+                messageText.innerHTML = window.marked.parse(messageData.text);
+            } else {
+                messageText.textContent = messageData.text;
+            }
+            messageContainer.appendChild(messageText);
         }
 
-        messageContainer.appendChild(messageText);
+        if (sender === 'feng' && messageData.image) {
+            const imageWrapper = document.createElement('div');
+            imageWrapper.className = 'image-wrapper';
+
+            const img = document.createElement('img');
+            img.src = messageData.image.url;
+            img.alt = messageData.image.description;
+            img.className = 'feng-image';
+
+            const photographerCredit = document.createElement('p');
+            photographerCredit.className = 'photographer-credit';
+            photographerCredit.innerHTML = `Photo by <a href="${messageData.image.profile_url}" target="_blank">${messageData.image.photographer}</a> on <a href="https://unsplash.com" target="_blank">Unsplash</a>`;
+            
+            imageWrapper.appendChild(img);
+            imageWrapper.appendChild(photographerCredit);
+            messageContainer.appendChild(imageWrapper);
+        }
+
         chatLog.appendChild(messageContainer);
         chatLog.scrollTop = chatLog.scrollHeight;
     };

@@ -7,10 +7,10 @@ from groq import Groq
 
 class GeneralConversationAgent:
     
-    def __init__(self, key_manager, model_name: str, kg_rag_engine, persona_prompt: str):
+    def __init__(self, key_manager, model_name: str, rag_engine, persona_prompt: str):
         self.key_manager = key_manager
         self.model_name = model_name
-        self.kg_rag_engine = kg_rag_engine
+        self.rag_engine = rag_engine
         
         self.general_conversation_prompt = persona_prompt + """
 **ภารกิจ: สหายทางปัญญา (Intellectual Companion)**
@@ -42,10 +42,10 @@ class GeneralConversationAgent:
         ใช้ KGRAGEngine เพื่อดึง "สัญชาตญาณ" จาก Knowledge Graph
         """
         print(f"  - 🕸️  Searching KG-RAG for intuition about: '{query}'")
-        if not self.kg_rag_engine:
+        if not self.rag_engine:
             return "ไม่มี"
         
-        results = self.kg_rag_engine.search(query, top_k=2)
+        results = self.rag_engine(query, top_k=2)
         
         if not results:
             return "ไม่มี"

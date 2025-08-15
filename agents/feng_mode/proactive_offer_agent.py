@@ -7,10 +7,10 @@ from groq import Groq
 
 class ProactiveOfferAgent:
     
-    def __init__(self, key_manager, model_name: str, kg_rag_engine, persona_prompt: str):
+    def __init__(self, key_manager, model_name: str, rag_engine, persona_prompt: str):
         self.key_manager = key_manager
         self.model_name = model_name
-        self.kg_rag_engine = kg_rag_engine
+        self.rag_engine = rag_engine
         self.persona_prompt = persona_prompt
         
         self.proactive_offer_prompt = persona_prompt + """
@@ -47,10 +47,10 @@ class ProactiveOfferAgent:
         ใช้ KGRAGEngine เพื่อดึง "สัญชาตญาณ" สำหรับการเสนอการวิเคราะห์ต่อ
         """
         print(f"  - 🕸️  Searching KG-RAG for proactive offer about: '{query}'")
-        if not self.kg_rag_engine:
+        if not self.rag_engine:
             return "ไม่มี"
         
-        results = self.kg_rag_engine.search(query, top_k=1)
+        results = self.rag_engine(query, top_k=1)
         
         if not results:
             return "ไม่มี"

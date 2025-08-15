@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="/static/graph_styles.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
+
 <body>
     <div class="background-scene"></div>
 
@@ -22,7 +24,7 @@
     </nav>
 
     <div id="main-container" class="main-container">
-        
+
         <main id="chat-interface" class="chat-interface">
             <header class="chat-header">
                 <div id="feng-symbol" class="feng-symbol">風</div>
@@ -33,11 +35,20 @@
                 <button id="toggle-sound-btn" class="sound-btn" title="ปิดเสียง">🔊</button>
             </header>
             <div id="chat-log" class="chat-log"></div>
+            <div id="suggested-prompts-container" class="suggested-prompts-container">
+                <div class="suggested-prompts-header">
+                    <h3>คำแนะนำ</h3>
+                    <button id="hide-prompts-btn" class="hide-prompts-btn" title="ซ่อนคำแนะนำ">❌</button>
+                </div>
+                <ul id="suggested-prompts-list" class="suggested-prompts-list">
+                </ul>
+            </div>
             <form id="chat-form" class="chat-form">
                 <button type="button" id="mic-btn" class="mic-btn" title="กดค้างเพื่อพูด">🎤</button>
                 <input type="text" id="user-input" placeholder="เริ่มต้นการสนทนา..." autocomplete="off">
                 <button type="submit" id="submit-btn">ส่ง</button>
             </form>
+
         </main>
 
         <aside id="thought-process-panel" class="thought-process-panel">
@@ -46,7 +57,9 @@
         </aside>
 
     </div>
-    
+
     <script src="/static/script.js"></script>
+    <script src="/static/suggested_prompts.js"></script>
 </body>
+
 </html>
