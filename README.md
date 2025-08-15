@@ -1,264 +1,67 @@
+<!-- THAI VERSION -->
 # 🧠 PROJECT NEXUS: The Unified Engine Architecture
 
-> An "Intellectual Companion" powered by a "Mixture of Experts & Models" architecture, orchestrated by a central "Dispatcher." It leverages "Advanced RAG" and "KG-RAG" for reasoning, all built upon a modern, scalable "Service-Oriented" architecture.
+> **"สหายทางปัญญา" (Intellectual Companion)** ที่ถูกสร้างขึ้นบนสถาปัตยกรรมแบบผสมผสาน (Hybrid Architecture) ที่ซับซ้อนและทรงพลัง โดยมี **Dispatcher** ทำหน้าที่เป็น "ผู้ควบคุมวงออร์เคสตรา" ของ **"ทีมผู้เชี่ยวชาญ" (Mixture of Experts)** ที่ใช้ขุมพลังจาก **"โมเดลหลายสังกัด" (Mixture of Models)** การตัดสินใจทั้งหมดขับเคลื่อนด้วยตรรกะ **Chain of Thought** และความสามารถในการให้เหตุผลขั้นสูงจากเทคนิค **Advanced RAG** และ **Unified RAG Engine Architecture** ทั้งหมดนี้ถูกให้บริการผ่านสถาปัตยกรรม **API-Driven** ที่ทันสมัย, ยืดหยุ่น, และพร้อมสำหรับการขยายขนาดในอนาคต
 
 [![Python Version](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Framework](https://img.shields.io/badge/Framework-FastAPI-green.svg)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
----
-
-**PROJECT NEXUS** is a living AI ecosystem designed to be a "companion" that is ready to reflect and research alongside the user. This project doesn't rely on a single architecture but is a **"Layered Architectural Blend"** where multiple systems work in concert to create an AI that is versatile, deeply contextual, and maintains a consistent personality.
-
-## ✨ Core Features
-
-*   **Dispatcher-Centric MoE:** A Dispatcher acts as an "orchestra conductor," directing a "team of specialists" (Agents) with specific responsibilities, enabling complex and systematic decision-making.
-*   **Hybrid Model Strategy:** Strategically combines the strengths of various models, including **Google Gemini 1.5 Flash** for tasks requiring depth and **Groq (Llama 3)** for tasks demanding speed and balance.
-*   **Advanced RAG (Plan-Retrieve-Synthesize):** A sophisticated 3-step information retrieval process that goes beyond standard RAG to produce high-quality analytical responses.
-*   **Unified RAG Engine Architecture:** A partitioned data retrieval system with dedicated engines for different knowledge sources (books, Knowledge Graph, news), ensuring maximum precision and efficiency.
-*   **Service-Oriented & API-Driven:** Built on FastAPI with a clean separation between backend and frontend, ready for future expansion into microservices.
+<div align="right">
+  <a href="#-project-nexus-the-unified-engine-architecture-english-version"><strong>English Version</strong></a>
+</div>
 
 ---
 
-## 🏛️ Core Architecture
+**PROJECT NEXUS** ไม่ใช่แค่ Chatbot แต่คือ **"ระบบนิเวศ AI ที่มีชีวิต"** ที่วิวัฒนาการจากโปรแกรมธรรมดามาสู่ "สหาย" ที่พร้อมจะร่วมไตร่ตรองและค้นคว้าไปกับผู้ใช้ โปรเจกต์นี้ไม่ได้ใช้สถาปัตยกรรมเพียงหนึ่งเดียว แต่เป็นการ **"หลอมรวมสถาปัตยกรรมหลายชั้น" (Layered Architectural Blend)** ที่ทำงานร่วมกันอย่างเป็นระบบ เพื่อสร้าง AI ที่มีความสามารถหลากหลาย, เข้าใจบริบทเชิงลึก, และมีบุคลิกภาพที่สอดคล้องกันภายใต้ตัวตนของ "เฟิง"
 
-Project Nexus is built on three interconnected architectural layers:
+## 🏛️ สถาปัตยกรรมหลัก: 3 ระดับแห่งความอัจฉริยะ
 
-### 1. AI & Decision-Making Architecture
-*   **Dispatcher-Centric Mixture of Experts (MoE):** The Dispatcher is the system's heart, receiving a "work file" from the FengAgent (triage unit) and assigning the mission to the most suitable Agent.
-*   **Hybrid Model Strategy:** Uses Gemini 1.5 Flash for high-quality tasks (planning, counseling) and Groq (Llama 3 70B & 8B) for speed-sensitive tasks (conversation, news summary, coding).
-*   **Advanced & Unified RAG:** Employs the Plan-Retrieve-Synthesize technique for in-depth research and features dedicated RAG engines for each data type (Book, KG, News).
+Project Nexus ถูกสร้างขึ้นบนสถาปัตยกรรม 3 ระดับที่ทำงานร่วมกันอย่างสมบูรณ์:
 
-### 2. Application & Service Architecture
-*   **Service-Oriented & API-Driven:** `main.py` (FastAPI) serves as the API Gateway, completely decoupling the backend and frontend.
-*   **Client-Server Architecture:** `web/` acts as the client, sending requests to the `main.py` processing server.
+### 1. ระดับ AI และการตัดสินใจ (The AI & Decision-Making Layer)
+*   **หัวใจ - Dispatcher-Centric Mixture of Experts (MoE):** `Dispatcher` ทำหน้าที่เป็น "ผู้ควบคุมวงออร์เคสตรา" รับ "แฟ้มงาน" ที่ผ่านการคัดกรองจาก `FengAgent` แล้วบัญชาการมอบหมายภารกิจให้ "ทีมผู้เชี่ยวชาญ" (Agents) ที่เหมาะสมที่สุด ทำให้ระบบตัดสินใจได้อย่างซับซ้อนและเป็นระบบ
+*   **ขุมพลัง - Hybrid Model Strategy:** ผสมผสานจุดแข็งของโมเดลจากหลายสังกัดอย่างมีกลยุทธ์:
+    *   **Google Gemini 1.5 Flash:** สำหรับงานที่ต้องการ "คุณภาพและความลึกซึ้ง" (การวางแผน, ให้คำปรึกษา, ขัดเกลาภาษา)
+    *   **Groq (Llama 3 70B & 8B):** สำหรับงานที่ต้องการ "ความเร็วและความฉลาดที่สมดุล" (การสนทนา, สรุปข่าว, เขียนโค้ด)
+*   **กระดูกสันหลัง - Advanced & Unified RAG:**
+    *   **Plan-Retrieve-Synthesize:** กระบวนการค้นหาความรู้เชิงลึกแบบ 3 ขั้นตอนที่ `PlannerAgent` ใช้ในการสร้างบทวิเคราะห์คุณภาพสูง
+    *   **Unified RAG Engine Architecture:** "คลังแสงข้อมูล" ที่มี Engine เฉพาะทาง 3 ตัว (Book, KG, News) เพื่อความแม่นยำสูงสุด
 
-### 3. Data & Software Architecture
-*   **ETL Pipelines:** Separate scripts (`manage_*.py`, `knowledge_extractor_*.py`) for building and maintaining the entire knowledge base.
-*   **Modular Architecture & Dependency Injection:** The project is structured into modules (core, agents, data), utilizing Dependency Injection in `main.py` for clean, testable code.
-
----
-
-## 🌊 How It Works (Data Flow)
-
-The entire process is orchestrated by `dispatcher.py`. When a user query is received:
-
-1.  **Intelligent Triage:**
-    *   The `FengAgent` acts as the first line of response.
-    *   It checks against a whitelist for quick, predefined answers.
-    *   For complex queries, it uses an LLM to correct typos, classify user intent, and extract keywords.
-    *   It creates a "work file" and sends it to the Dispatcher.
-
-2.  **Intent-based Delegation:**
-    *   The `Dispatcher` receives the "work file" and uses an `intent_to_agent_map` to identify the appropriate specialist Agent.
-    *   It delegates the task to the correct Agent (e.g., `PlannerAgent`, `NewsAgent`, `CounselorAgent`) along with necessary tools (like a RAG Engine).
-
-3.  **Outcome Management:**
-    *   The `Dispatcher` receives the result from the executing Agent.
-    *   If necessary, it forwards the result to the `FormatterAgent` to translate, format with Markdown, and align with the "Feng" persona.
-    *   The conversation is saved via the `MemoryManager`.
-    *   A `FinalResponse` object is created and sent back to the frontend for display.
-
----
-
-## 🚀 Getting Started
-
-Follow these steps to set up and run the project in your local environment.
-
-### Prerequisites
-*   Python 3.12+
-*   Git
-*   A running instance of a Neo4j database
-
-### Installation
-
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/Mike0165115321/PROJECT-NEXUS.git
-    cd PROJECT-NEXUS
-    ```
-
-2.  **Create and activate a virtual environment:**
-    ```bash
-    python3 -m venv .venvs
-    source .venvs/bin/activate
-    ```
-
-3.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **Set up environment variables:**
-    *   Copy the `.env.example` file (if available) or create a new file named `.env`.
-    *   Add your secret credentials to the `.env` file:
-    ```env
-    # Google Gemini API Keys (as a comma-separated list)
-    GOOGLE_API_KEYS=your_gemini_key_1,your_gemini_key_2
-
-    # Groq API Keys (as a comma-separated list)
-    GROQ_API_KEYS=your_groq_key_1,your_groq_key_2
-
-    # Neo4j Database Credentials
-    NEO4J_URI="bolt://localhost:7687"
-    NEO4J_USER="neo4j"
-    NEO4J_PASSWORD="your_neo4j_password"
-
-    # Unsplash API Key (for ImageAgent)
-    UNSPLASH_ACCESS_KEY="your_unsplash_key"
-    ```
-
-5.  **Prepare data and build indices:**
-    *   (Optional but Recommended) Run the ETL scripts in sequence to build the knowledge base:
-    ```bash
-    # 1. Extract Knowledge Graph from books (can be time-consuming)
-    python3 knowledge_extractor_gemini.py
-
-    # 2. Create the vector index for books
-    python3 manage_data.py
-
-    # 3. Create the vector index for the Knowledge Graph
-    python3 manage_kg_data.py
-
-    # 4. Fetch and create the vector index for news
-    python3 manage_news.py
-    ```
-
-6.  **Run the application:**
-    ```bash
-    uvicorn main:app --reload
-    ```
-    The server will be running at `http://127.0.0.1:8000`.
-
----
-
-## 🛠️ Usage
-
-*   **Main Web Interface:** Open your browser and navigate to `http://127.0.0.1:8000`.
-*   **API Documentation:** FastAPI automatically generates interactive API documentation at `http://127.0.0.1:8000/docs`.
-
----
-
-## 🗺️ Project Structure
-PROJECT_NEXUS/
-│
-├── .venvs/ # 📦 Python virtual environment
-│
-├── agents/ # 🧠 The Agency: A collection of specialists (Agents) with single responsibilities
-│ ├── persona_core.py # 🆔 "Feng" Persona: The core personality DNA prompt
-│ ├── formatter_agent.py # 🎨 The Editor: Refines language, formats, and ensures persona consistency
-│ ├── coder_mode/ # - Faction: The Coders Guild
-│ ├── consultant_mode/ # - Faction: The Librarians
-│ ├── counseling_mode/ # - Faction: The Empathic Counselors
-│ ├── feng_mode/ # - Faction: The Core Identity & Triage
-│ ├── news_mode/ # - Faction: The Journalists
-│ ├── planning_mode/ # - Faction: The Architects
-│ ├── storytelling_mode/ # - Faction: The Listeners
-│ └── utility_mode/ # - Faction: The Support Crew
-│
-├── core/ # ⚙️ The Engine Room: Core mechanics and shared tools
-│ ├── api_key_manager.py # 🔑 Manages Gemini API Keys
-│ ├── groq_key_manager.py # 🔑 Manages Groq API Keys
-│ ├── config.py # 📜 Main Control Panel: Loads settings from .env
-│ ├── dispatcher.py # 🚦 The Conductor: The heart of the system
-│ ├── graph_manager.py # 🕸️ Neo4j Graph Manager
-│ ├── memory_manager.py # 🧠 Short-term memory management
-│ ├── rag_engine.py # 🔍 Book RAG Engine
-│ ├── kg_rag_engine.py # 💡 Intuition RAG Engine (KG-RAG)
-│ └── news_rag_engine.py # 📡 Intelligence RAG Engine (News)
-│
-├── data/ # 📦 The Vault: Persistent data storage
-│ ├── books/ # 📚 Bookshelf (raw data)
-│ ├── index/ # 📇 Book Index Cabinet (FAISS)
-│ ├── graph_index/ # 🌐 Intuition Index Cabinet (FAISS)
-│ ├── news_index/ # 📰 News Index (FAISS)
-│ └── memory.db # 💾 Memory Database (SQLite)
-│
-├── neo4j-data/ # 🧠 Knowledge Graph Brain (Neo4j data)
-├── sandbox_workspace/ # 🔬 Safe laboratory for the CodeInterpreterAgent
-│
-├── web/ # 🎨 Frontend (HTML, CSS, JS)
-│
-├── .env # 🤫 The Safe: Secret credentials (ignored by Git)
-├── .gitignore # 🙈 The Ignore List: Specifies files and folders for Git to ignore
-│
-├── main.py # ▶️ The Start Button: FastAPI application entry point
-├── knowledge_extractor_gemini.py # 🏭 Knowledge Extraction Factory (ETL)
-├── manage_data.py # 🛠️ Book Data Management Tool (ETL)
-├── manage_kg_data.py # 🛠️ Graph Data Management Tool (ETL)
-├── manage_news.py # 🛠️ News Management Tool (ETL)
-└── requirements.txt # 📜 Installation Blueprint (Dependencies)
-
-
-
-
-
-# 🧠 PROJECT NEXUS: The Unified Engine Architecture
-
-> "สหายทางปัญญา" (Intellectual Companion) ที่ขับเคลื่อนด้วยสถาปัตยกรรม "Mixture of Experts & Models" ซึ่งถูกบัญชาการโดย "Dispatcher" กลาง, มีความสามารถในการใช้ "Advanced RAG" และ "KG-RAG" ในการให้เหตุผล, และถูกสร้างขึ้นบนสถาปัตยกรรม "Service-Oriented" ที่ทันสมัยและพร้อมสำหรับการขยายขนาด
-
-[![Python Version](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![Framework](https://img.shields.io/badge/Framework-FastAPI-green.svg)](https://fastapi.tiangolo.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
----
-
-**PROJECT NEXUS** คือระบบนิเวศ AI ที่มีชีวิต ซึ่งถูกออกแบบให้เป็น "สหาย" ที่พร้อมจะร่วมไตร่ตรองและค้นคว้าไปกับผู้ใช้ โปรเจกต์นี้ไม่ได้ใช้สถาปัตยกรรมเพียงหนึ่งเดียว แต่เป็นการ **"หลอมรวมสถาปัตยกรรมหลายชั้น" (Layered Architectural Blend)** ที่ทำงานร่วมกันอย่างเป็นระบบ เพื่อสร้าง AI ที่มีความสามารถหลากหลาย, เข้าใจบริบทเชิงลึก, และมีบุคลิกภาพที่สอดคล้องกัน
-
-## ✨ คุณสมบัติหลัก (Core Features)
-
-*   **Dispatcher-Centric MoE:** ใช้ Dispatcher เป็น "ผู้ควบคุมวงออร์เคสตรา" ในการบัญชาการ "ทีมผู้เชี่ยวชาญ" (Agents) ที่มีความสามารถเฉพาะทาง ทำให้การตัดสินใจซับซ้อนและเป็นระบบ
-*   **Hybrid Model Strategy:** ผสมผสานจุดแข็งของโมเดลจากหลายสังกัดอย่างมีกลยุทธ์ ทั้ง **Google Gemini 1.5 Flash** สำหรับงานที่ต้องการความลึกซึ้ง และ **Groq (Llama 3)** สำหรับงานที่ต้องการความเร็วและความสมดุล
-*   **Advanced RAG (Plan-Retrieve-Synthesize):** กระบวนการค้นหาความรู้เชิงลึกแบบ 3 ขั้นตอนที่ซับซ้อนกว่า RAG ทั่วไป เพื่อสร้างบทวิเคราะห์ที่มีคุณภาพ
-*   **Unified RAG Engine Architecture:** สถาปัตยกรรมคลังข้อมูลแบบแยกส่วน (หนังสือ, Knowledge Graph, ข่าว) เพื่อความแม่นยำและประสิทธิภาพสูงสุดในการค้นหา
-*   **Service-Oriented & API-Driven:** ออกแบบบน FastAPI โดยแยกส่วน Backend และ Frontend อย่างสมบูรณ์ พร้อมสำหรับการขยายขนาดเป็น Microservices ในอนาคต
-
----
-
-## 🏛️ สถาปัตยกรรมหลัก (Core Architecture)
-
-Project Nexus ถูกสร้างขึ้นบนสถาปัตยกรรม 3 ระดับที่ทำงานร่วมกัน:
-
-### 1. สถาปัตยกรรมระดับ AI และการตัดสินใจ (AI & Decision-Making)
-*   **Dispatcher-Centric Mixture of Experts (MoE):** Dispatcher เป็นหัวใจของระบบ ทำหน้าที่รับ "แฟ้มงาน" จาก FengAgent (หน่วยคัดกรอง) และมอบหมายภารกิจให้ Agent ที่เหมาะสมที่สุด
-*   **Hybrid Model Strategy:** ใช้ Gemini 1.5 Flash สำหรับงานคุณภาพสูง (การวางแผน, ให้คำปรึกษา) และใช้ Groq (Llama 3 70B & 8B) สำหรับงานที่ต้องการความเร็ว (การสนทนา, สรุปข่าว, เขียนโค้ด)
-*   **Advanced & Unified RAG:** ใช้เทคนิค Plan-Retrieve-Synthesize สำหรับการค้นคว้าเชิงลึก และมี RAG Engine แยกเฉพาะสำหรับข้อมูลแต่ละประเภท (หนังสือ, KG, ข่าว)
-
-### 2. สถาปัตยกรรมระดับแอปพลิเคชันและบริการ (Application & Service)
-*   **Service-Oriented & API-Driven:** `main.py` (FastAPI) ทำหน้าที่เป็น API Gateway ทำให้ Backend และ Frontend แยกจากกันอย่างสมบูรณ์
+### 2. ระดับแอปพลิเคชันและบริการ (The Application & Service Layer)
+*   **Service-Oriented & API-Driven:** `main.py` (FastAPI) ทำหน้าที่เป็น API Gateway กลาง ทำให้ Backend และ Frontend แยกจากกันอย่างสมบูรณ์ และพร้อมที่จะถูกแยกเป็น Microservices ในอนาคต
 *   **Client-Server Architecture:** `web/` ทำหน้าที่เป็น Client ที่ส่ง Request ไปยัง `main.py` ซึ่งเป็น Server ประมวลผล
 
-### 3. สถาปัตยกรรมระดับข้อมูลและซอฟต์แวร์ (Data & Software)
-*   **ETL Pipelines:** มีสคริปต์แยกต่างหาก (`manage_*.py`, `knowledge_extractor_*.py`) สำหรับการสร้างและบำรุงรักษาคลังความรู้ทั้งหมด
-*   **Modular Architecture & Dependency Injection:** โครงสร้างโปรเจกต์ถูกแบ่งเป็นโมดูล (core, agents, data) และใช้หลักการ Dependency Injection ใน `main.py` เพื่อโค้ดที่สะอาดและทดสอบง่าย
+### 3. ระดับข้อมูลและซอฟต์แวร์ (The Data & Software Layer)
+*   **ETL Pipelines:** "โรงงานข้อมูล" ที่มีสคริปต์แยกต่างหาก (`manage_*.py`, `knowledge_extractor_*.py`) สำหรับการสร้างและบำรุงรักษาคลังความรู้ทั้งหมด
+*   **Modular Architecture & Dependency Injection:** โครงสร้างโปรเจกต์ถูกแบ่งเป็นโมดูล (core, agents, data) และใช้หลักการ Dependency Injection ใน `main.py` เพื่อโค้ดที่สะอาด, ทดสอบง่าย, และบำรุงรักษาได้ในระยะยาว
 
 ---
 
-## 🌊 การไหลของข้อมูล (How It Works)
+## 🌊 การไหลของตรรกะ: จากคำถามสู่ภูมิปัญญา
 
-กระบวนการทำงานทั้งหมดถูกควบคุมโดย `dispatcher.py` เมื่อผู้ใช้ส่งคำถามเข้ามา:
+กระบวนการทำงานทั้งหมดถูกควบคุมโดย `dispatcher.py` อย่างสง่างาม:
 
-1.  **การคัดกรองอัจฉริยะ (Intelligent Triage):**
-    *   `FengAgent` รับคำถามเข้ามาเป็นด่านแรก
-    *   ตรวจสอบกับ Whitelist เพื่อตอบคำถามง่ายๆ ทันที
-    *   หากซับซ้อน จะใช้ LLM เพื่อแก้ไขคำผิด, วิเคราะห์เจตนา (Intent), และสกัด Keyword
-    *   สร้าง "แฟ้มงาน" แล้วส่งให้ Dispatcher
+1.  **Flow 0: ภารกิจต่อเนื่อง (Continuing Mission):** ระบบสามารถจดจำ "ข้อเสนอ" การวิเคราะห์เชิงลึก และดำเนินการต่อได้ทันทีเมื่อผู้ใช้ตอบรับ ทำให้เกิดการสนทนาแบบหลายขั้นตอน (Multi-turn) ที่ราบรื่น
+2.  **Flow 1: การคัดกรองอัจฉริยะ (Intelligent Triage):** `FengAgent` ทำหน้าที่เป็นประตูบานแรก ตอบคำถามง่ายๆ ทันทีด้วย Whitelist และใช้ LLM วิเคราะห์เจตนา (Intent) ของคำถามที่ซับซ้อน ก่อนสร้าง "แฟ้มงาน" ส่งให้ Dispatcher
+3.  **Flow 2: การบัญชาการตามเจตนา (Intent-based Delegation):** `Dispatcher` ใช้ `intent_to_agent_map` เพื่อมอบหมายภารกิจให้ Agent ที่เหมาะสมที่สุด พร้อมมอบเครื่องมือที่จำเป็น (เช่น RAG Engine เฉพาะทาง)
+4.  **Flow 3: การจัดการผลลัพธ์และการสรุปผล (Outcome Management):** `Dispatcher` รับผลลัพธ์, ส่งต่อให้ `FormatterAgent` เพื่อขัดเกลาขั้นสุดท้าย, บันทึกความทรงจำ, และสร้าง `FinalResponse` กลับไปให้ผู้ใช้
+5.  **Flow พิเศษ: ตาข่ายความปลอดภัย (Safety Net):** `try...except` block ใน Dispatcher จะดักจับข้อผิดพลาดร้ายแรงและเรียกใช้ `ApologyAgent` เพื่อจัดการสถานการณ์อย่างนุ่มนวล
 
-2.  **การบัญชาการตามเจตนา (Intent-based Delegation):**
-    *   `Dispatcher` รับ "แฟ้มงาน" และใช้ `intent_to_agent_map` เพื่อหา Agent ที่เหมาะสม
-    *   จ่ายงานให้ Agent ผู้เชี่ยวชาญ (เช่น `PlannerAgent`, `NewsAgent`, `CounselorAgent`) พร้อมเครื่องมือที่จำเป็น (เช่น RAG Engine)
+---
 
-3.  **การจัดการผลลัพธ์และการสรุปผล (Outcome Management):**
-    *   `Dispatcher` รับผลลัพธ์จาก Agent
-    *   หากจำเป็น จะส่งต่อให้ `FormatterAgent` เพื่อแปล, จัดรูปแบบ Markdown, และปรับให้ตรงตามบุคลิกของ "เฟิง"
-    *   บันทึกการสนทนาลงใน `MemoryManager`
-    *   สร้าง `FinalResponse` ส่งกลับไปให้ Frontend เพื่อแสดงผล
+## 🛠️ เทคโนโลยีที่ใช้ (Tech Stack)
+
+*   **Backend:** FastAPI, Uvicorn
+*   **AI & LLM:** Google Generative AI SDK (Gemini), Groq SDK (Llama 3)
+*   **Data Science & RAG:** Sentence-Transformers, FAISS, Newspaper3k, Rapidfuzz
+*   **Databases:** Neo4j (Graph Database), SQLite (Memory & Caching)
+*   **Services:** Google AI Platform, GroqCloud
+*   **Development:** Python 3.12+, Git, venv
 
 ---
 
 ## 🚀 เริ่มต้นใช้งาน (Getting Started)
-
-ทำตามขั้นตอนต่อไปนี้เพื่อตั้งค่าและรันโปรเจกต์บนสภาพแวดล้อมของคุณ
 
 ### สิ่งที่ต้องมี (Prerequisites)
 *   Python 3.12+
@@ -285,37 +88,26 @@ Project Nexus ถูกสร้างขึ้นบนสถาปัตยก
     ```
 
 4.  **ตั้งค่า Environment Variables:**
-    *   คัดลอกไฟล์ `.env.example` (ถ้ามี) หรือสร้างไฟล์ใหม่ชื่อ `.env`
-    *   เพิ่มข้อมูลลับของคุณลงในไฟล์ `.env`:
+    *   สร้างไฟล์ `.env` และเพิ่มข้อมูลลับของคุณ:
     ```env
     # Google Gemini API Keys (ใส่เป็น list คั่นด้วย comma)
     GOOGLE_API_KEYS=your_gemini_key_1,your_gemini_key_2
-
     # Groq API Keys (ใส่เป็น list คั่นด้วย comma)
     GROQ_API_KEYS=your_groq_key_1,your_groq_key_2
-
     # Neo4j Database Credentials
     NEO4J_URI="bolt://localhost:7687"
     NEO4J_USER="neo4j"
     NEO4J_PASSWORD="your_neo4j_password"
-
-    # Unsplash API Key (สำหรับ ImageAgent)
+    # Unsplash API Key
     UNSPLASH_ACCESS_KEY="your_unsplash_key"
     ```
 
-5.  **เตรียมข้อมูลและสร้าง Index:**
-    *   (แนะนำ) รันสคริปต์ ETL ตามลำดับเพื่อสร้างคลังความรู้:
+5.  **เตรียมข้อมูลและสร้าง Index (สำคัญ):**
+    *   รันสคริปต์ ETL ตามลำดับเพื่อสร้างคลังความรู้:
     ```bash
-    # 1. สกัด Knowledge Graph จากหนังสือ (อาจใช้เวลานาน)
     python3 knowledge_extractor_gemini.py
-
-    # 2. สร้าง Vector Index สำหรับหนังสือ
     python3 manage_data.py
-
-    # 3. สร้าง Vector Index สำหรับ Knowledge Graph
     python3 manage_kg_data.py
-
-    # 4. ดึงข้อมูลและสร้าง Vector Index สำหรับข่าว
     python3 manage_news.py
     ```
 
@@ -323,65 +115,144 @@ Project Nexus ถูกสร้างขึ้นบนสถาปัตยก
     ```bash
     uvicorn main:app --reload
     ```
-    เซิร์ฟเวอร์จะทำงานที่ `http://127.0.0.1:8000`
+    *   เข้าใช้งานที่ `http://127.0.0.1:8000`
+    *   ดูเอกสาร API ที่ `http://127.0.0.1:8000/docs`
 
 ---
 
-## 🛠️ การใช้งาน (Usage)
+## 🛤️ การเดินทาง: จาก "โปรแกรม" สู่ "สหายทางปัญญา"
 
-*   **หน้าเว็บหลัก:** เปิดเบราว์เซอร์แล้วไปที่ `http://127.0.0.1:8000`
-*   **เอกสาร API:** FastAPI จะสร้างเอกสาร API แบบโต้ตอบให้โดยอัตโนมัติที่ `http://127.0.0.1:8000/docs`
+PROJECT NEXUS ไม่ได้เกิดขึ้นในชั่วข้ามคืน แต่ผ่านการเดินทาง 3 ช่วงสำคัญที่หล่อหลอมให้มันเป็นอย่างทุกวันนี้:
+1.  **การแก้ไขวิกฤตและสร้างรากฐาน:** เริ่มต้นจากการเป็น "นักสืบ" แก้ปัญหาที่ซ่อนอยู่ลึกๆ จนได้มาซึ่ง "วินัย" และรากฐานทางเทคนิคที่แข็งแกร่ง
+2.  **การปฏิวัติสถาปัตยกรรม AI:** "ยกเครื่อง" ระบบครั้งใหญ่ จาก Agent ตัวเดียวสู่ "Mixture of Experts", เปลี่ยนศูนย์กลางไปที่ "Dispatcher", และผสมผสานขุมพลังจาก "Mixture of Models" (Gemini + Groq)
+3.  **การหลอมรวม "จิตวิญญาณ" และ "เครื่องยนต์":** สร้าง "จิตวิญญาณ" ให้กับ "เฟิง" ผ่าน `persona_core.py`, ออกแบบ `FengAgent` ให้เป็น "หน่วยคัดกรองอัจฉริยะ", และสร้าง `Unified RAG Engine Architecture` เพื่อมอบเครื่องมือค้นหาที่ทรงพลังที่สุดให้แก่ Agent ทุกตัว
+
+ผลลัพธ์คือระบบนิเวศ AI ที่มีทั้ง "สมองส่วนหน้า" (Dispatcher), "ทีมผู้เชี่ยวชาญ" (Agents), "ขุมพลัง" (Models), "ความทรงจำ" (RAG Engines), และ "หัวใจ" (Persona) ที่ทำให้มันเป็นมากกว่าโปรแกรม
+
+---
+<br>
+
+<!-- ENGLISH VERSION -->
+# 🧠 PROJECT NEXUS: The Unified Engine Architecture (English Version)
+
+> An **"Intellectual Companion"** built on a sophisticated and powerful **Hybrid Architecture**. It features a **Dispatcher** as the "orchestra conductor" for a **"Mixture of Experts"** team, powered by a **"Mixture of Models"**. All decisions are driven by **Chain of Thought** logic and advanced reasoning from **Advanced RAG** and a **Unified RAG Engine Architecture**, all served through a modern, flexible, and scalable **API-Driven** architecture.
+
+<div align="right">
+  <a href="#-project-nexus-the-unified-engine-architecture"><strong>เวอร์ชั่นภาษาไทย</strong></a>
+</div>
+
+**PROJECT NEXUS** is not just a chatbot; it is a **"living AI ecosystem"** that has evolved from a simple program into a "companion" ready to reflect and research alongside its user. This project doesn't rely on a single architecture but is a **"Layered Architectural Blend"** where multiple systems work in concert to create an AI that is versatile, deeply contextual, and maintains a consistent personality under the persona of "Feng."
+
+## 🏛️ Core Architecture: Three Layers of Intelligence
+
+Project Nexus is built on three perfectly integrated architectural layers:
+
+### 1. The AI & Decision-Making Layer
+*   **The Heart - Dispatcher-Centric Mixture of Experts (MoE):** The `Dispatcher` acts as the "orchestra conductor," receiving a "work file" from the `FengAgent` (triage unit) and assigning the mission to the most suitable specialist "Agent," enabling complex, systematic decision-making.
+*   **The Powerhouse - Hybrid Model Strategy:** Strategically combines the strengths of various models:
+    *   **Google Gemini 1.5 Flash:** For tasks requiring "quality and depth" (planning, counseling, final formatting).
+    *   **Groq (Llama 3 70B & 8B):** For tasks demanding a "balance of speed and intelligence" (conversation, news summary, coding).
+*   **The Backbone - Advanced & Unified RAG:**
+    *   **Plan-Retrieve-Synthesize:** A 3-step deep knowledge retrieval process used by the `PlannerAgent` to generate high-quality analysis.
+    *   **Unified RAG Engine Architecture:** A "data arsenal" with three specialized engines (Book, KG, News) for maximum precision.
+
+### 2. The Application & Service Layer
+*   **Service-Oriented & API-Driven:** `main.py` (FastAPI) serves as the central API Gateway, completely decoupling the backend and frontend, ready for future expansion into microservices.
+*   **Client-Server Architecture:** `web/` acts as the client, sending requests to the `main.py` processing server.
+
+### 3. The Data & Software Layer
+*   **ETL Pipelines:** A dedicated "data factory" of separate scripts (`manage_*.py`, `knowledge_extractor_*.py`) for building and maintaining the entire knowledge base.
+*   **Modular Architecture & Dependency Injection:** The project is structured into modules (core, agents, data), utilizing Dependency Injection in `main.py` for clean, testable, and maintainable code.
 
 ---
 
-## 🗺️ โครงสร้างโปรเจกต์ (Project Structure)
-PROJECT_NEXUS/
-│
-├── .venvs/ # 📦 สภาพแวดล้อมเสมือนของ Python
-│
-├── agents/ # 🧠 ศูนย์บัญชาการของผู้เชี่ยวชาญ (Agents) ที่มีหน้าที่รับผิดชอบเพียงหนึ่งเดียว
-│ ├── persona_core.py # 🆔 บัตรประจำตัว "เฟิง": เก็บ Prompt บุคลิกภาพหลัก (DNA)
-│ ├── formatter_agent.py # 🎨 บรรณาธิการใหญ่: ขัดเกลาภาษา, จัดรูปแบบ, และตรวจสอบบุคลิก
-│ ├── coder_mode/ # - Faction: The Coders Guild
-│ ├── consultant_mode/ # - Faction: The Librarians
-│ ├── counseling_mode/ # - Faction: The Empathic Counselors
-│ ├── feng_mode/ # - Faction: The Core Identity & Triage
-│ ├── news_mode/ # - Faction: The Journalists
-│ ├── planning_mode/ # - Faction: The Architects
-│ ├── storytelling_mode/ # - Faction: The Listeners
-│ └── utility_mode/ # - Faction: The Support Crew
-│
-├── core/ # ⚙️ ห้องเครื่องยนต์: กลไกหลักและเครื่องมือที่ใช้ร่วมกัน
-│ ├── api_key_manager.py # 🔑 จัดการ API Key ของ Gemini
-│ ├── groq_key_manager.py # 🔑 จัดการ API Key ของ Groq
-│ ├── config.py # 📜 แผงควบคุมหลัก: โหลดค่าจาก .env
-│ ├── dispatcher.py # 🚦 ผู้ควบคุมวงออร์เคสตรา: หัวใจของระบบ
-│ ├── graph_manager.py # 🕸️ ผู้จัดการกราฟ Neo4j
-│ ├── memory_manager.py # 🧠 จัดการความจำระยะสั้น
-│ ├── rag_engine.py # 🔍 เครื่องมือค้นหาหนังสือ (Book RAG)
-│ ├── kg_rag_engine.py # 💡 เครื่องมือค้นหาสัญชาตญาณ (KG-RAG)
-│ └── news_rag_engine.py # 📡 เครื่องมือค้นหาข่าวกรอง (News RAG)
-│
-├── data/ # 📦 คลังข้อมูลถาวร
-│ ├── books/ # 📚 ชั้นหนังสือ (ข้อมูลดิบ)
-│ ├── index/ # 📇 ตู้ดัชนีหนังสือ (FAISS)
-│ ├── graph_index/ # 🌐 ตู้ดัชนีสัญชาตญาณ (FAISS)
-│ ├── news_index/ # 📰 ดัชนีข่าว (FAISS)
-│ └── memory.db # 💾 ฐานข้อมูลความทรงจำ (SQLite)
-│
-├── neo4j-data/ # 🧠 สมองส่วน Knowledge Graph (Neo4j)
-├── sandbox_workspace/ # 🔬 ห้องทดลองปลอดภัยสำหรับ CodeInterpreterAgent
-│
-├── web/ # 🎨 ส่วนหน้าบ้าน (Frontend - HTML, CSS, JS)
-│
-├── .env # 🤫 ตู้นิรภัย (ข้อมูลลับ, ignored by Git)
-├── .gitignore # 🙈 รายการสิ่งที่ Git จะไม่สนใจ
-│
-├── main.py # ▶️ ปุ่มสตาร์ท: จุดเริ่มต้นของแอปพลิเคชัน FastAPI
-├── knowledge_extractor_gemini.py # 🏭 โรงงานสกัดความรู้ (ETL)
-├── manage_data.py # 🛠️ เครื่องมือจัดการข้อมูลหนังสือ (ETL)
-├── manage_kg_data.py # 🛠️ เครื่องมือจัดการข้อมูลกราฟ (ETL)
-├── manage_news.py # 🛠️ เครื่องมือจัดการข่าว (ETL)
-└── requirements.txt # 📜 พิมพ์เขียวการติดตั้ง (Dependencies)
+## 🌊 Logic Flow: From Query to Wisdom
 
+The entire workflow is elegantly orchestrated by `dispatcher.py`:
 
+1.  **Flow 0: Continuing Mission:** The system remembers "offers" for deep-dive analysis and can resume the task seamlessly when the user agrees, enabling smooth multi-turn conversations.
+2.  **Flow 1: Intelligent Triage:** The `FengAgent` acts as the gateway, providing instant answers via a whitelist and using an LLM to classify the intent of complex queries before creating a "work file" for the Dispatcher.
+3.  **Flow 2: Intent-based Delegation:** The `Dispatcher` uses an `intent_to_agent_map` to delegate the task to the most appropriate Agent, equipping it with the necessary specialized tools (e.g., a specific RAG Engine).
+4.  **Flow 3: Outcome Management:** The `Dispatcher` receives the result, passes it to the `FormatterAgent` for final polishing, saves the memory, and constructs the `FinalResponse` for the user.
+5.  **Special Flow: Safety Net:** A `try...except` block in the Dispatcher catches critical errors and calls the `ApologyAgent` to handle the situation gracefully.
+
+---
+
+## 🛠️ Tech Stack
+
+*   **Backend:** FastAPI, Uvicorn
+*   **AI & LLM:** Google Generative AI SDK (Gemini), Groq SDK (Llama 3)
+*   **Data Science & RAG:** Sentence-Transformers, FAISS, Newspaper3k, Rapidfuzz
+*   **Databases:** Neo4j (Graph Database), SQLite (Memory & Caching)
+*   **Services:** Google AI Platform, GroqCloud
+*   **Development:** Python 3.12+, Git, venv
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+*   Python 3.12+
+*   Git
+*   A running instance of a Neo4j database
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/Mike0165115321/PROJECT-NEXUS.git
+    cd PROJECT-NEXUS
+    ```
+
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python3 -m venv .venvs
+    source .venvs/bin/activate
+    ```
+
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Set up environment variables:**
+    *   Create a `.env` file and add your credentials:
+    ```env
+    # Google Gemini API Keys (as a comma-separated list)
+    GOOGLE_API_KEYS=your_gemini_key_1,your_gemini_key_2
+    # Groq API Keys (as a comma-separated list)
+    GROQ_API_KEYS=your_groq_key_1,your_groq_key_2
+    # Neo4j Database Credentials
+    NEO4J_URI="bolt://localhost:7687"
+    NEO4J_USER="neo4j"
+    NEO4J_PASSWORD="your_neo4j_password"
+    # Unsplash API Key
+    UNSPLASH_ACCESS_KEY="your_unsplash_key"
+    ```
+
+5.  **Prepare data and build indices (Crucial Step):**
+    *   Run the ETL scripts in sequence to build the knowledge base:
+    ```bash
+    python3 knowledge_extractor_gemini.py
+    python3 manage_data.py
+    python3 manage_kg_data.py
+    python3 manage_news.py
+    ```
+
+6.  **Run the application:**
+    ```bash
+    uvicorn main:app --reload
+    ```
+    *   Access the app at `http://127.0.0.1:8000`
+    *   View the API docs at `http://127.0.0.1:8000/docs`
+
+---
+
+## 🛤️ The Journey: From Program to Intellectual Companion
+
+PROJECT NEXUS wasn't built overnight. It was forged through a three-stage journey that shaped its very essence:
+1.  **Crisis & Foundation:** It began with "detective work" to solve deep, hidden bugs, which instilled the "discipline" and strong technical foundation the project stands on today.
+2.  **The AI Architectural Revolution:** A major overhaul that transformed the system from a single agent to a "Mixture of Experts," shifted the core logic to be "Dispatcher-centric," and created a powerful "Mixture of Models" (Gemini + Groq).
+3.  **Fusing the Soul & The Engine:** The final stage involved breathing "soul" into the "Feng" persona via `persona_core.py`, designing the `FengAgent` as an intelligent gateway, and engineering the `Unified RAG Engine Architecture` to arm every agent with the most powerful tools.
+
+The result is an AI ecosystem with a "prefrontal cortex" (Dispatcher), a "team of specialists" (Agents), a "hybrid powerhouse" (Models), a vast "memory" (RAG Engines), and most importantly, a "heart" (Persona) that makes it more than just a program.
