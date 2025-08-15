@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เฟิง (風)</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/graph_styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="background-scene"></div>
+
+    <nav class="control-navbar">
+        <div class="navbar-title">Project Nexus Control</div>
+        <div class="navbar-toggles">
+            <label for="tp-toggle-btn">Thought Process:</label>
+            <button id="tp-toggle-btn" class="toggle-btn is-active" title="ซ่อน/แสดง Panel ความคิด">
+                แสดง
+            </button>
+        </div>
+    </nav>
+
+    <div id="main-container" class="main-container">
+        
+        <main id="chat-interface" class="chat-interface">
+            <header class="chat-header">
+                <div id="feng-symbol" class="feng-symbol">風</div>
+                <div class="header-text">
+                    <h2>เฟิง</h2>
+                    <p>ออนไลน์</p>
+                </div>
+                <button id="toggle-sound-btn" class="sound-btn" title="ปิดเสียง">🔊</button>
+            </header>
+            <div id="chat-log" class="chat-log"></div>
+            <form id="chat-form" class="chat-form">
+                <button type="button" id="mic-btn" class="mic-btn" title="กดค้างเพื่อพูด">🎤</button>
+                <input type="text" id="user-input" placeholder="เริ่มต้นการสนทนา..." autocomplete="off">
+                <button type="submit" id="submit-btn">ส่ง</button>
+            </form>
+        </main>
+
+        <aside id="thought-process-panel" class="thought-process-panel">
+            <div id="tp-content" class="tp-content">
+            </div>
+        </aside>
+
+    </div>
+    
+    <script src="/static/script.js"></script>
+</body>
+</html>

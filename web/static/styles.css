@@ -1,0 +1,337 @@
+/* =================================================================
+   ไฟล์: styles.css
+   โปรเจกต์: เฟิง (風) - สนทนากับปัญญา
+   เวอร์ชัน: 2.2 (Dynamic Layout Control)
+   ================================================================= */
+
+/* --- 1. การตั้งค่าพื้นฐานและตัวแปร (Base Setup & Variables) --- */
+:root {
+    --wood-gray: #3a3a3a;
+    --bamboo-green: #5a7d60;
+    --zen-white: #f0f0f0;
+    --soft-gold: #c0a062;
+    --dark-bg: #121212;
+    --light-black: rgba(0, 0, 0, 0.4);
+    --error-red: #d93025;
+    --accent-blue: #007AFF;
+
+    --font-serif-header: 'Noto Serif TC', serif;
+    --font-sans-ui: 'Noto Sans Thai', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-sans-ui);
+    background-color: var(--dark-bg);
+    color: var(--zen-white);
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* --- 2. ฉากหลังและ Navbar (Background & Navbar) --- */
+.background-scene {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://images.unsplash.com/photo-1542370285-b8eb8317691c?q=80&w=1887');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.1;
+    z-index: -1;
+}
+
+.control-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    box-sizing: border-box;
+    background-color: rgba(28, 28, 30, 0.7);
+    backdrop-filter: blur(12px);
+    color: #fff;
+    padding: 0 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 2000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.navbar-title {
+    font-weight: 600;
+    font-family: var(--font-serif-header);
+}
+.navbar-toggles {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.toggle-btn {
+    padding: 6px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+.toggle-btn.is-active {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #fff;
+}
+
+.main-container {
+    width: 100%;
+    height: 100%;
+    padding: 70px 20px 20px 20px; /* บน, ขวา, ล่าง, ซ้าย */
+    display: grid;
+    transition: grid-template-columns 0.4s cubic-bezier(0.25, 1, 0.5, 1), gap 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.main-container.tp-visible {
+    grid-template-columns: 1fr 420px;
+    gap: 20px;
+}
+.main-container.tp-hidden {
+    grid-template-columns: 1fr 0px;
+    gap: 0;
+}
+
+.chat-interface {
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: rgba(18, 18, 18, 0.5);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    overflow: hidden;
+}
+
+.thought-process-panel {
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: rgba(24, 24, 24, 0.5);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    overflow: hidden;
+    transition: opacity 0.4s ease;
+}
+.main-container.tp-hidden .thought-process-panel {
+    opacity: 0;
+}
+
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.feng-symbol {
+    font-family: var(--font-serif-header);
+    font-size: 2.5rem;
+    color: var(--soft-gold);
+    transition: transform 0.5s, opacity 0.5s;
+    margin-right: 1rem;
+}
+
+.feng-symbol.thinking {
+    animation: breathing 2s infinite ease-in-out;
+}
+
+.header-text h2 {
+    font-family: var(--font-serif-header);
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.header-text p {
+    font-size: 0.9rem;
+    color: var(--bamboo-green);
+    margin: 0;
+    font-weight: 500;
+}
+
+.sound-btn {
+    margin-left: auto;
+}
+
+
+/* --- 5. หน้าต่างแชท (Chat Log) --- */
+.chat-log {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.chat-log::-webkit-scrollbar { width: 6px; }
+.chat-log::-webkit-scrollbar-track { background: transparent; }
+.chat-log::-webkit-scrollbar-thumb { background: var(--wood-gray); border-radius: 10px; }
+
+.message {
+    max-width: 85%;
+    padding: 0.8rem 1.2rem;
+    border-radius: 18px;
+    line-height: 1.7;
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+.feng-message {
+    align-self: flex-start;
+    background: var(--light-black);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom-left-radius: 5px;
+}
+
+.user-message {
+    align-self: flex-end;
+    background: rgba(192, 160, 98, 0.15);
+    color: var(--zen-white);
+    font-style: italic;
+    border: 1px solid var(--soft-gold);
+    border-bottom-right-radius: 5px;
+}
+
+.feng-message p { margin-bottom: 0.5em; }
+.feng-message ul { padding-left: 20px; margin-top: 0.25em; margin-bottom: 1em; }
+.feng-message li { margin-bottom: 0.5em; }
+
+
+/* --- 6. ฟอร์มสำหรับพิมพ์ (Input Form) --- */
+.chat-form {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+#user-input {
+    flex-grow: 1;
+    background: var(--wood-gray);
+    border: 1px solid var(--soft-gold);
+    border-radius: 50px;
+    padding: 0.9rem 1.5rem;
+    color: var(--zen-white);
+    font-family: var(--font-sans-ui);
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+#user-input:focus {
+    outline: none;
+    box-shadow: 0 0 15px rgba(192, 160, 98, 0.5);
+    background: #454545;
+}
+
+#user-input:disabled {
+    background-color: #2a2a2a;
+    cursor: wait;
+}
+
+.mic-btn, .sound-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+    border-radius: 50%;
+    border: none;
+    background-color: transparent;
+    color: var(--zen-white);
+    opacity: 0.7;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.mic-btn:hover, .sound-btn:hover {
+    opacity: 1;
+    background-color: var(--wood-gray);
+    transform: scale(1.1);
+}
+
+.mic-btn.is-listening {
+    color: var(--zen-white);
+    background-color: var(--error-red);
+    opacity: 1;
+    animation: pulse 1.5s infinite;
+}
+
+#submit-btn {
+    display: none;
+}
+
+
+/* --- 7. Keyframe Animations --- */
+@keyframes breathing {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(217, 48, 37, 0.7); }
+    70% { box-shadow: 0 0 0 12px rgba(217, 48, 37, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(217, 48, 37, 0); }
+}
+
+
+/* --- 8. การปรับสำหรับจอเล็ก (Responsive Design) --- */
+@media (max-width: 1024px) {
+    body {
+        padding: 0;
+    }
+    
+    .main-container {
+        padding-top: 50px; /* เว้นที่ให้ Navbar */
+        flex-direction: column;
+        height: 100vh;
+        gap: 0;
+    }
+
+    .chat-interface {
+        flex: 3;
+        border-radius: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .thought-process-panel {
+        flex: 2;
+        border-radius: 0;
+    }
+
+    .navbar-toggles {
+        display: none;
+    }
+}
