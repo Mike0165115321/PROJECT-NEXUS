@@ -78,7 +78,7 @@ Project Nexus ถูกสร้างขึ้นบนสถาปัตยก
 
 2.  **สร้างและเปิดใช้งาน Virtual Environment:**
     ```bash
-    python3 -m venv .venvs
+    python -m venv .venvs
     source .venvs/bin/activate
     ```
 
@@ -105,10 +105,10 @@ Project Nexus ถูกสร้างขึ้นบนสถาปัตยก
 5.  **เตรียมข้อมูลและสร้าง Index (สำคัญ):**
     *   รันสคริปต์ ETL ตามลำดับเพื่อสร้างคลังความรู้:
     ```bash
-    python3 knowledge_extractor_gemini.py
-    python3 manage_data.py
-    python3 manage_kg_data.py
-    python3 manage_news.py
+    python knowledge_extractor_gemini.py
+    python manage_data.py
+    python manage_kg_data.py
+    python manage_news.py
     ```
 
 6.  **รันแอปพลิเคชัน:**
@@ -206,7 +206,7 @@ The entire workflow is elegantly orchestrated by `dispatcher.py`:
 
 2.  **Create and activate a virtual environment:**
     ```bash
-    python3 -m venv .venvs
+    python -m venv .venvs
     source .venvs/bin/activate
     ```
 
@@ -233,10 +233,10 @@ The entire workflow is elegantly orchestrated by `dispatcher.py`:
 5.  **Prepare data and build indices (Crucial Step):**
     *   Run the ETL scripts in sequence to build the knowledge base:
     ```bash
-    python3 knowledge_extractor_gemini.py
-    python3 manage_data.py
-    python3 manage_kg_data.py
-    python3 manage_news.py
+    python knowledge_extractor_gemini.py
+    python manage_data.py
+    python manage_kg_data.py
+    python manage_news.py
     ```
 
 6.  **Run the application:**
