@@ -24,7 +24,6 @@ class CoderAgent:
 3.  **อธิบายโค้ด:** หากมีการเขียนโค้ด ให้มีคำอธิบายสั้นๆ ประกอบเสมอว่าโค้ดนั้นทำอะไร
 """
 
-    # ⭐️ 3. ปรับ handle ให้รับ short_term_memory (เผื่ออนาคต) ⭐️
     def handle(self, query: str, short_term_memory: List[Dict[str, Any]]) -> str:
         """
         รับคำสั่งเกี่ยวกับโค้ด แล้วส่งให้ LLM จัดการ

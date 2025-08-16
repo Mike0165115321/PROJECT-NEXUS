@@ -67,11 +67,10 @@ class ListenerAgent:
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model=self.model_name,
-                temperature=0.5 # เพิ่มความหลากหลายเล็กน้อย
+                temperature=0.5
             )
             return chat_completion.choices[0].message.content.strip()
             
         except Exception as e:
             print(f"❌ ListenerAgent LLM Error: {e}")
-            # Fallback เป็นคำตอบรับแบบง่ายๆ
             return random.choice(["ครับ", "น่าสนใจครับ", "เล่าต่อได้เลยครับ"])

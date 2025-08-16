@@ -62,5 +62,4 @@ class ApologyAgent:
             return chat_completion.choices[0].message.content.strip()
         except Exception as e:
             print(f"❌ ApologyAgent's own LLM Error: {e}")
-            # Fallback สุดท้ายจริงๆ
             return "ผมต้องขออภัยอย่างสูงครับ ดูเหมือนว่าระบบจะขัดข้องชั่วคราว โปรดลองใหม่อีกครั้งในภายหลัง"

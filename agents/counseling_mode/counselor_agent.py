@@ -64,5 +64,4 @@ class CounselorAgent:
             
         except Exception as e:
             print(f"❌ CounselorAgent LLM Error: {e}")
-            # ในกรณีที่เกิด Error ควรให้คำตอบที่ยังคงความเข้าอกเข้าใจไว้
             return "ผมต้องขออภัยด้วยครับ ดูเหมือนว่าตอนนี้ผมจะยังไม่สามารถไตร่ตรองในเรื่องนี้ได้อย่างเต็มที่"

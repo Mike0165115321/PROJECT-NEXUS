@@ -9,7 +9,6 @@ class FormatterAgent:
     Agent ที่ทำหน้าที่เป็น "บรรณาธิการ" และ "นักจัดรูปแบบ" (Typesetter)
     รับผิดชอบการขัดเกลาคำตอบสุดท้ายเพื่อให้มีรูปแบบที่ชัดเจน สวยงาม และอ่านง่าย
     """
-    # ⭐️ 1. รับ model_name เข้ามาตอนสร้างอินสแตนซ์ ⭐️
     def __init__(self, key_manager, model_name: str, persona_prompt: str):
         """
         เริ่มต้นการทำงานโดยรับทรัพยากรที่จำเป็นทั้งหมดเข้ามา
@@ -17,7 +16,6 @@ class FormatterAgent:
         self.key_manager = key_manager
         self.model_name = model_name
         
-        # ⭐️ 2. ประกอบร่าง Prompt ใหม่ โดยยังคงกฎเหล็กเดิมของคุณไว้ ⭐️
         self.formatting_prompt_template = persona_prompt + """
 **ภารกิจ: บรรณาธิการและนักจัดรูปแบบ (Editor & Typesetter)**
 
@@ -44,14 +42,13 @@ class FormatterAgent:
 **ฉบับสมบูรณ์ที่จัดรูปแบบแล้ว (โดย เฟิง):**
 """
 
-    # ⭐️ 3. ปรับ handle ให้รับ Dictionary และมี Error Handling ที่ดีขึ้น ⭐️
     def handle(self, synthesis_order: Dict[str, Any]) -> str:
         """
         รับ "แฟ้มงานบรรณาธิการ" (synthesis_order) จาก Dispatcher มาประมวลผล
         """
         raw_draft = synthesis_order.get("draft_to_review", "")
         if not raw_draft or not isinstance(raw_draft, str):
-            return "" # คืนค่าว่างถ้าไม่มีร่างคำตอบ
+            return ""
 
         original_query = synthesis_order.get("original_query", "(ไม่ระบุ)")
 
@@ -74,11 +71,11 @@ class FormatterAgent:
             
         except Exception as e:
             error_str = str(e).lower()
-            if "429" in error_str: # ดักจับ Rate Limit Error ได้กว้างขึ้น
+            if "429" in error_str:
                 print(f"🟡 Formatter Agent: Key '...{api_key[-4:]}' hit rate limit.")
                 self.key_manager.report_failure(api_key)
                 print("   -> Retrying with the next available key...")
-                return self.handle(synthesis_order) # Retry โดยส่ง synthesis_order เดิมไป
+                return self.handle(synthesis_order)
             else:
                 print(f"❌ An unexpected error occurred in Formatter Agent: {e}")
-                return raw_draft # Fallback to raw text
+                return raw_draft

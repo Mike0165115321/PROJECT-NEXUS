@@ -15,7 +15,7 @@
     align-items: center;
     z-index: 2000;
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    height: 50px; /* กำหนดความสูง */
+    height: 50px;
 }
 .navbar-title {
     font-weight: 600;

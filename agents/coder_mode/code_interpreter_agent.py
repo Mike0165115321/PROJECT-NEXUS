@@ -12,10 +12,9 @@ class CodeInterpreterAgent:
     Agent ที่สามารถวิเคราะห์ปัญหา, สร้างโค้ด Python, รันใน Sandbox,
     และสรุปผลลัพธ์อย่างเข้าใจง่าย
     """
-    # ⭐️ 1. รับทรัพยากรตามมาตรฐานใหม่ ⭐️
     def __init__(self, key_manager, model_name: str, persona_prompt: str):
         self.key_manager = key_manager
-        self.model_name = model_name # ⭐️ ใช้โมเดลที่ได้รับมา (Llama 3 8B)
+        self.model_name = model_name
         self.code_executor = CodeExecutor()
         
         self.system_prompt = persona_prompt + """
@@ -75,7 +74,6 @@ class CodeInterpreterAgent:
                 print(f"  - ❌ Failed to extract code from LLM response.")
                 return "ขออภัยครับ ผมไม่สามารถสร้างโค้ดสำหรับคำขอนี้ได้"
 
-            # --- Step 2: รันโค้ดใน Sandbox ---
             print(f"  - Step 2/3: Executing code...\n---\n{code_to_run}\n---")
             output, has_error = self.code_executor.run_code_in_sandbox(code_to_run)
             print(f"  - Execution output (Error: {has_error}):\n---\n{output}\n---")
