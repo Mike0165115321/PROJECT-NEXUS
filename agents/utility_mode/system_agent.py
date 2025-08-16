@@ -1,4 +1,5 @@
 # agents/utility_mode/system_agent.py
+# (V3 - Linux Specialist)
 
 import pyperclip
 import os
@@ -9,26 +10,12 @@ import re
 from typing import Optional
 
 class SystemAgent:
+    """
+    Agent ที่จัดการการทำงานกับระบบปฏิบัติการ (ปรับจูนสำหรับ Linux/WSL)
+    """
     def __init__(self):
         self.current_os = platform.system().lower()
-        self.AudioUtilities = None
-        self.IAudioEndpointVolume = None
-        self.CLSCTX_ALL = None
-        print(f"⚙️  System Agent (V2 - Rule-Based) is operational on {self.current_os}.")
-
-        if self.current_os == 'windows':
-            try:
-                from comtypes import CLSCTX_ALL
-                from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-                self.AudioUtilities = AudioUtilities
-                self.IAudioEndpointVolume = IAudioEndpointVolume
-                self.CLSCTX_ALL = CLSCTX_ALL
-                print("[System Agent] pycaw loaded successfully for Windows volume control.")
-            except ImportError:
-                print("[System Agent] WARNING: pycaw or comtypes not found. Volume control disabled.")
-        else:
-            print(f"[System Agent] Running on {self.current_os}. Windows-specific features are disabled.")
-
+        print(f"⚙️  System Agent (V3 - Linux Specialist) is operational on {self.current_os}.")
 
     def _read_clipboard(self) -> str:
         try:
@@ -46,27 +33,45 @@ class SystemAgent:
     
     def _open_application(self, app_name: str) -> str:
         app_name_lower = app_name.lower().strip()
+        
         thai_to_eng_app = {
-            'เครื่องคิดเลข': 'calculator', 'โน้ตแพด': 'notepad', 'โครม': 'chrome',
-            'เบราว์เซอร์': 'browser', 'เวิร์ด': 'word', 'เอ็กเซล': 'excel',
-            'พาวเวอร์พอยท์': 'powerpoint', 'สปอติฟาย': 'spotify', 'วีเอสโค้ด': 'vscode',
+            'เครื่องคิดเลข': 'calculator', 
+            'เท็กซ์เอดิเตอร์': 'text_editor',
+            'โน้ตแพด': 'text_editor',
+            'โครม': 'chrome',
+            'เบราว์เซอร์': 'browser',
+            'วีเอสโค้ด': 'vscode',
+            'สปอติฟาย': 'spotify',
+            'เทอร์มินัล': 'terminal',
+            'ไฟล์': 'file_manager'
         }
+        
         app_map = {
-            'notepad': {'windows': 'notepad.exe', 'darwin': 'open -a TextEdit', 'linux': 'gedit'},
-            'calculator': {'windows': 'calc.exe', 'darwin': 'open -a Calculator', 'linux': 'gnome-calculator'},
-            'browser': {'windows': r'start chrome', 'darwin': 'open -a "Google Chrome"', 'linux': 'google-chrome-stable'},
-            'chrome': {'windows': r'start chrome', 'darwin': 'open -a "Google Chrome"', 'linux': 'google-chrome-stable'},
-            'vscode': {'windows': 'code', 'darwin': 'code', 'linux': 'code'},
-            'spotify': {'windows': 'spotify', 'darwin': 'open -a Spotify', 'linux': 'spotify'},
-            'word': {'windows': 'winword'}, 'excel': {'windows': 'excel'},
-            'powerpoint': {'windows': 'powerpnt', 'darwin': 'open -a "Microsoft PowerPoint"'},
+            'text_editor': 'gedit',
+            'calculator': 'gnome-calculator',
+            'browser': 'google-chrome-stable',
+            'chrome': 'google-chrome-stable',
+            'vscode': 'code',
+            'spotify': 'spotify',
+            'terminal': 'gnome-terminal',
+            'file_manager': 'nautilus'
         }
+        
         app_key = thai_to_eng_app.get(app_name_lower, app_name_lower)
-        command = app_map.get(app_key, {}).get(self.current_os)
-        if not command: return f"ขออภัยครับ ผมไม่รู้จักวิธีเปิด '{app_name}' บน {self.current_os}"
+        command = app_map.get(app_key)
+        is_wsl = 'microsoft' in platform.uname().release.lower()
+        
+        if app_key == 'file_manager' and is_wsl:
+            command = 'explorer.exe .'
+            print("  - [System Agent] WSL detected. Using 'explorer.exe .' for file manager.")
+        
+        if not command: 
+            return f"ขออภัยครับ ผมไม่รู้จักวิธีเปิด '{app_name}' บน Linux"
         try:
             subprocess.Popen(command, shell=True)
             return f"กำลังเปิด {app_name} ให้ครับ..."
+        except FileNotFoundError:
+            return f"ขออภัยครับ ดูเหมือนว่าโปรแกรม '{command}' จะยังไม่ได้ติดตั้งบนระบบของคุณ"
         except Exception as e:
             return f"ขออภัยครับ เกิดข้อผิดพลาดขณะพยายามเปิด {app_name}: {e}"
 
@@ -87,37 +92,21 @@ class SystemAgent:
     def _set_system_volume(self, level: int) -> str:
         if not 0 <= level <= 100: return "โปรดระบุระดับเสียงระหว่าง 0 ถึง 100 ครับ"
         try:
-            if self.current_os == 'windows':
-                if not self.AudioUtilities: raise NotImplementedError("Volume control disabled (pycaw missing).")
-                devices = self.AudioUtilities.GetSpeakers()
-                interface = devices.Activate(self.IAudioEndpointVolume._iid_, self.CLSCTX_ALL, None)
-                volume = interface.QueryInterface(self.IAudioEndpointVolume)
-                volume.SetMasterVolumeLevelScalar(level / 100.0, None)
-            elif self.current_os == 'darwin':
-                subprocess.run(['osascript', '-e', f'set volume output volume {level}'])
-            elif self.current_os == 'linux':
-                subprocess.run(['amixer', '-D', 'pulse', 'sset', 'Master', f'{level}%'])
+            subprocess.run(['amixer', '-D', 'pulse', 'sset', 'Master', f'{level}%'], check=True)
             return f"ปรับระดับเสียงเป็น {level}% แล้วครับ"
+        except subprocess.CalledProcessError:
+            return "ขออภัยครับ ไม่สามารถปรับระดับเสียงได้ อาจจะไม่มี PulseAudio ติดตั้งอยู่"
         except Exception as e:
             return f"ขออภัยครับ เกิดข้อผิดพลาดขณะพยายามปรับระดับเสียง: {e}"
 
     def _get_current_volume(self) -> Optional[int]:
         try:
-            if self.current_os == 'windows':
-                if not self.AudioUtilities: return None
-                devices = self.AudioUtilities.GetSpeakers()
-                interface = devices.Activate(self.IAudioEndpointVolume._iid_, self.CLSCTX_ALL, None)
-                volume = interface.QueryInterface(self.IAudioEndpointVolume)
-                return round(volume.GetMasterVolumeLevelScalar() * 100)
-            elif self.current_os == 'darwin':
-                result = subprocess.run(['osascript', '-e', 'output volume of (get volume settings)'], capture_output=True, text=True)
-                return int(result.stdout.strip())
-            elif self.current_os == 'linux':
-                result = subprocess.run(['amixer', '-D', 'pulse', 'sget', 'Master'], capture_output=True, text=True)
-                match = re.search(r"\[(\d{1,3})%\]", result.stdout)
-                if match: return int(match.group(1))
+            result = subprocess.run(['amixer', '-D', 'pulse', 'sget', 'Master'], capture_output=True, text=True, check=True)
+            match = re.search(r"\[(\d{1,3})%\]", result.stdout)
+            if match: return int(match.group(1))
             return None
-        except Exception: return None
+        except Exception: 
+            return None
 
     def _change_volume(self, direction: str, amount: int = 10) -> str:
         current_level = self._get_current_volume()
@@ -141,9 +130,10 @@ class SystemAgent:
         if any(keyword in q_lower for keyword in ["ลดเสียง", "เบาลง"]):
             return self._change_volume("decrease")
 
-        open_app_match = re.search(r"เปิด(?:โปรแกรม|แอป)?\s+([\wก-๙_.-]+)", q_lower)
+        open_app_match = re.search(r"เปิด(?:โปรแกรม|แอป)?\s*(.+)", q_lower)
         if open_app_match:
-            entity_name = open_app_match.group(1)
+            entity_name = open_app_match.group(1).replace("ให้หน่อย", "").replace("หน่อย", "").strip()
+            
             if entity_name in ['youtube', 'facebook', 'google', 'gmail', 'github']:
                 return self._open_website(entity_name)
             else:

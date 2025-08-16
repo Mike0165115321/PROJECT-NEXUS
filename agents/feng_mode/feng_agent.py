@@ -43,12 +43,28 @@ class FengAgent:
 ---
 **ตัวอย่างการวิเคราะห์เจตนา (สำคัญมาก):**
 
+- **คำถามดิบ:** "สรุปข่าวเทคโนโลยีล่าสุดทั่วโลก"
+- **ผลลัพธ์ JSON:**
+{{
+  "corrected_query": "สรุปข่าวเทคโนโลยีล่าสุดทั่วโลก",
+  "intent": "NEWS_REQUEST",
+  "keywords": ["สรุปข่าว", "ข่าว", "เทคโนโลยี"]
+}}
+
 - **คำถามดิบ:** "วิเคราะห์ข้อดีข้อเสียของ Stoicism กับ Epicureanism"
 - **ผลลัพธ์ JSON:**
 {{
   "corrected_query": "วิเคราะห์ข้อดีข้อเสียของ Stoicism กับ Epicureanism",
   "intent": "PLANNER_REQUEST",
   "keywords": ["Stoicism", "Epicureanism", "ข้อดีข้อเสีย", "วิเคราะห์"]
+}}
+
+- **คำถามดิบ:** "เปรียบเทียบหนังสือ 'Atomic Habits' กับ 'The Power of Habit'"
+- **ผลลัพธ์ JSON:**
+{{
+  "corrected_query": "เปรียบเทียบหนังสือ 'Atomic Habits' กับ 'The Power of Habit'",
+  "intent": "PLANNER_REQUEST",
+  "keywords": ["เปรียบเทียบ", "Atomic Habits", "The Power of Habit"]
 }}
 
 - **คำถามดิบ:** "The Art of War คืออะไร"
@@ -64,7 +80,7 @@ class FengAgent:
 {{
   "corrected_query": "วันนี้รู้สึกแย่จังเลย",
   "intent": "COUNSELING_REQUEST",
-  "keywords": ["รู้สึกแย่"]
+  "keywords": ["รู้สึกแย่", "ท้อใจ", "เครียด", "เศร้า"]
 }}
 
 - **คำถามดิบ:** "หารูปภูเขาสวยๆ ให้หน่อย"
@@ -75,10 +91,10 @@ class FengAgent:
   "keywords": ["รูป", "ภูเขา", "สวยๆ"]
 }}
 
-- **คำถามดิบ:** "เปิดโปรแกรมเครื่องคิดเลข"
+- **คำถามดิบ:** "เปิดโปรแกรมเครื่องคิดเลขให้หน่อย"
 - **ผลลัพธ์ JSON:**
 {{
-  "corrected_query": "เปิดโปรแกรมเครื่องคิดเลข",
+  "corrected_query": "เปิดโปรแกรมเครื่องคิดเลขให้หน่อย",
   "intent": "SYSTEM_COMMAND",
   "keywords": ["เปิด", "โปรแกรม", "เครื่องคิดเลข"]
 }}
@@ -90,6 +106,7 @@ class FengAgent:
   "intent": "LIBRARIAN_REQUEST",
   "keywords": ["แนะนำ", "หนังสือ", "ประวัติศาสตร์"]
 }}
+
 - **คำถามดิบ:** "ตอนนี้คุณมีหนังสือกี่เล่ม"
 - **ผลลัพธ์ JSON:**
 {{
@@ -105,6 +122,7 @@ class FengAgent:
   "intent": "TIME_REQUEST",
   "keywords": ["กี่โมง", "เวลา"]
 }}
+
 ---
 
 **คำถามดิบ:** "{query}"

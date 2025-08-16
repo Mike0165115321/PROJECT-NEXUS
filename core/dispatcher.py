@@ -75,7 +75,7 @@ class Dispatcher:
             
             agents_needing_memory = {
                 "GENERAL_HANDLER", "COUNSELOR", "CODER", 
-                "LIBRARIAN", "LISTENER"
+                "LISTENER"
             }
 
             agent_name = intent_to_agent_map.get(intent)

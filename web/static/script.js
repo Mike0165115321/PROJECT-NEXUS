@@ -72,9 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setThinkingState(true);
         clearThoughtProcess();
         
-        const promptsContainer = document.getElementById('suggested-prompts-container');
-        if (promptsContainer && typeof promptsContainer.hidePrompts === 'function') {
-            promptsContainer.hidePrompts();
+        const panel = document.getElementById('suggested-prompts-panel');
+        if (panel && typeof panel.hidePrompts === 'function') {
+            panel.hidePrompts();
         }
         
         try {
@@ -101,10 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessageToLog({ text: "ขออภัยครับ เกิดข้อผิดพลาดร้ายแรง โปรดตรวจสอบ Console" }, 'feng');
         } finally {
             setThinkingState(false);
-            if (promptsContainer && typeof promptsContainer.displayNewPrompts === 'function') {
-                promptsContainer.displayNewPrompts();
-            }
         }
+        
     };
     
     const addMessageToLog = (messageData, sender) => {

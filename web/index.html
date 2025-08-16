@@ -35,16 +35,23 @@
                 <button id="toggle-sound-btn" class="sound-btn" title="ปิดเสียง">🔊</button>
             </header>
             <div id="chat-log" class="chat-log"></div>
-            <div id="suggested-prompts-container" class="suggested-prompts-container">
+            <div id="chat-log" class="chat-log"></div>
+
+            <div id="suggested-prompts-panel" class="suggested-prompts-panel is-hidden">
                 <div class="suggested-prompts-header">
                     <h3>คำแนะนำ</h3>
-                    <button id="hide-prompts-btn" class="hide-prompts-btn" title="ซ่อนคำแนะนำ">❌</button>
+                    <div>
+                        <button id="refresh-prompts-btn" class="panel-btn" title="สุ่มคำแนะนำใหม่">🔄</button>
+                        <button id="pin-prompts-btn" class="panel-btn" title="ตรึง/ปลดตรึง">📌</button>
+                    </div>
                 </div>
                 <ul id="suggested-prompts-list" class="suggested-prompts-list">
                 </ul>
             </div>
+
             <form id="chat-form" class="chat-form">
-                <button type="button" id="mic-btn" class="mic-btn" title="กดค้างเพื่อพูด">🎤</button>
+                <button type="button" id="toggle-prompts-btn" class="chat-form-btn" title="แสดง/ซ่อนคำแนะนำ">💡</button>
+                <button type="button" id="mic-btn" class="chat-form-btn" title="กดค้างเพื่อพูด">🎤</button>
                 <input type="text" id="user-input" placeholder="เริ่มต้นการสนทนา..." autocomplete="off">
                 <button type="submit" id="submit-btn">ส่ง</button>
             </form>

@@ -336,48 +336,66 @@ body {
     }
 }
 
-/* --- 6.5. กล่องข้อความสำเร็จรูป (V2) --- */
-.suggested-prompts-container {
-    padding: 0 1.5rem 1rem;
+/* --- 6.5. กล่องควบคุมการแชท (Chat Controls Container) --- */
+.chat-controls-container {
+    display: flex;
+    flex-direction: column; /* ทำให้ "แผง" และ "ฟอร์ม" เรียงกันในแนวตั้ง */
+    flex-shrink: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* --- 6.6. แผงคำแนะนำอัจฉริยะ (Smart Suggestion Panel) --- */
+.suggested-prompts-panel {
+    padding: 0.75rem 1.5rem;
+    background: rgba(18, 18, 18, 0.7); /* สีพื้นหลังให้เข้มขึ้นเล็กน้อย */
     flex-shrink: 0;
     transition: all 0.4s ease-in-out;
     overflow: hidden;
+    max-height: 200px; /* กำหนดความสูงสูงสุด */
 }
 
-/* คลาสสำหรับซ่อน */
-.suggested-prompts-container.hidden {
-    opacity: 0;
+.suggested-prompts-panel.is-hidden {
     max-height: 0;
     padding-top: 0;
     padding-bottom: 0;
-    margin-bottom: -1rem; /* ชดเชย margin */
+    /* ไม่ต้องมี border-top-color: transparent; อีกต่อไป */
 }
 
 .suggested-prompts-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .suggested-prompts-header h3 {
-    font-family: var(--font-sans-ui);
     font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.6);
     font-weight: 500;
 }
 
-.hide-prompts-btn {
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: color 0.3s;
+.suggested-prompts-header div {
+    display: flex;
+    gap: 5px;
 }
 
-.hide-prompts-btn:hover {
-    color: rgba(255, 255, 255, 0.8);
+.panel-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.3s, transform 0.3s;
+    padding: 5px;
+}
+
+.panel-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.1);
+}
+
+.panel-btn.is-pinned {
+    color: var(--accent-blue);
 }
 
 .suggested-prompts-list {
@@ -386,11 +404,11 @@ body {
     margin: 0;
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 10px;
 }
 
-.prompt-item { /* เปลี่ยนจาก .prompt-btn เป็น .prompt-item */
+.prompt-item {
     background-color: rgba(58, 58, 58, 0.5);
     color: var(--zen-white);
     border: 1px solid rgba(192, 160, 98, 0.4);
@@ -412,7 +430,40 @@ body {
     transform: translateY(-2px);
 }
 
-/* --- 5.5. สไตล์สำหรับรูปภาพในแชท --- */
+/* --- 6.7. ปรับปรุง Chat Form --- */
+.chat-form {
+    /* ไม่ต้องมี border-top ที่นี่อีกต่อไป */
+    padding: 0.75rem 1.5rem;
+}
+
+.chat-form-btn { /* สไตล์กลางสำหรับปุ่มในฟอร์ม */
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+    border-radius: 50%;
+    border: none;
+    background-color: transparent;
+    color: var(--zen-white);
+    opacity: 0.7;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.chat-form-btn:hover {
+    opacity: 1;
+    background-color: var(--wood-gray);
+}
+
+.chat-form-btn.is-active {
+    color: var(--accent-blue);
+    opacity: 1;
+}
+
+/* --- 5.5. สไตล์สำหรับรูปภาพในแชท (ย้ายมาไว้ด้วยกัน) --- */
 .image-wrapper {
     margin-top: 1rem;
 }

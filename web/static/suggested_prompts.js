@@ -1,40 +1,48 @@
 // web/static/suggested_prompts.js
-// (V3.1 - With Event Listeners)
+// (V4 - Smart Suggestion Panel)
 
 function initializeSuggestedPrompts() {
-    const promptsContainer = document.getElementById('suggested-prompts-container');
-    const promptsList = document.getElementById('suggested-prompts-list');
-    const hidePromptsBtn = document.getElementById('hide-prompts-btn');
+    const panel = document.getElementById('suggested-prompts-panel');
+    const list = document.getElementById('suggested-prompts-list');
+    const refreshBtn = document.getElementById('refresh-prompts-btn');
+    const pinBtn = document.getElementById('pin-prompts-btn');
+    const toggleBtn = document.getElementById('toggle-prompts-btn');
     const userInput = document.getElementById('user-input');
-    const chatLog = document.getElementById('chat-log');
-    
-    if (!promptsContainer || !promptsList || !hidePromptsBtn || !userInput || !chatLog) {
-        console.error("Suggested prompts cannot initialize: Required elements not found.");
+    const chatForm = document.getElementById('chat-form');
+
+    if (!panel || !list || !refreshBtn || !pinBtn || !toggleBtn || !userInput || !chatForm) {
+        console.error("Smart Suggestion Panel cannot initialize: Required elements not found.");
         return;
     }
 
+    let isPinned = false;
+
     const allShowcasePrompts = [
-        "วิเคราะห์ข้อดีข้อเสียของ Stoicism กับ Epicureanism",
+        // --- ⭐️ หมวด 1: การวิเคราะห์และเปรียบเทียบเชิงลึก (PlannerAgent Showcase) ⭐️ ---
+        "วิเคราะห์ข้อดีข้อเสียของปรัชญา Stoicism กับ Epicureanism",
+        "เปรียบเทียบแนวคิดเรื่อง 'อำนาจ' จากหนังสือ The 48 Laws of Power และ The Prince",
+        "วิเคราะห์ความสัมพันธ์ระหว่าง 'ความสุข' และ 'เงิน' จากมุมมองทางจิตวิทยา",
+        "ทำไมคนเราถึงผัดวันประกันพรุ่ง และจะเอาชนะมันได้อย่างไรโดยใช้หลักการจากหนังสือ",
+        "เปรียบเทียบหนังสือ 'Atomic Habits' กับ 'The Power of Habit'",
+
+        // --- ⭐️ หมวด 2: การวางแผนและการแก้ปัญหา (Planner & Counselor Showcase) ⭐️ ---
         "ช่วยวางแผนการเรียนรู้เรื่อง Machine Learning สำหรับผู้เริ่มต้นหน่อย",
+        "ช่วงนี้รู้สึกหมดไฟในการทำงาน ควรจะเริ่มต้นแก้ไขจากจุดไหนดี",
+        "จะสร้างนิสัยการอ่านหนังสือให้ต่อเนื่องได้อย่างไร",
+        "ช่วยวางแผนการพัฒนาทักษะการสื่อสารสำหรับปีนี้หน่อย",
+
+        // --- ⭐️ หมวด 3: การให้ข้อมูลและความรู้ (Librarian & ProactiveOffer Showcase) ⭐️ ---
+        "The Innovator's Dilemma คืออะไร",
+        "แนะนำหนังสือที่ดีที่สุด 3 เล่ม เกี่ยวกับการตัดสินใจ",
+        "มีหนังสืออะไรบ้างในหมวดหมู่ 'ธุรกิจและภาวะผู้นำ'",
+
+        // --- ⭐️ หมวด 4: การใช้เครื่องมือ (Utility Showcase) ⭐️ ---
         "สรุปข่าวเทคโนโลยีล่าสุดทั่วโลก",
-        "แนะนำหนังสือเกี่ยวกับประวัติศาสตร์ที่น่าสนใจหน่อย",
-        "มีหนังสืออะไรบ้างในคลังความรู้ของคุณ",
-        "เขียนโค้ด Python สำหรับหาค่าเฉลี่ยของ list",
-        "หารูปภูเขาสวยๆ ตอนพระอาทิตย์ขึ้น",
-        "เปิดโปรแกรมเครื่องคิดเลข",
-        "The Art of War คืออะไร",
-        "วันนี้รู้สึกเครียดมากเลย ทำยังไงดี",
-        "คุณคิดว่า AI จะครองโลกในอนาคตไหม"
+        "หารูปภาพท้องฟ้าสวยๆ",
+        "เขียนโค้ด Python ง่ายๆ สำหรับหาค่าเฉลี่ยของ list"
     ];
 
     const display = () => {
-        if (chatLog.children.length > 1) {
-            promptsContainer.classList.add('hidden');
-            return;
-        }
-
-        promptsContainer.classList.remove('hidden');
-
         const shuffled = [...allShowcasePrompts].sort(() => 0.5 - Math.random());
         const selectedPrompts = shuffled.slice(0, 3);
 
@@ -42,39 +50,45 @@ function initializeSuggestedPrompts() {
         selectedPrompts.forEach((prompt, index) => {
             promptsHTML += `<li class="prompt-item" style="--delay: ${index * 100}ms">${prompt}</li>`;
         });
-        promptsList.innerHTML = promptsHTML;
+        list.innerHTML = promptsHTML;
     };
 
-    promptsList.addEventListener('click', (event) => {
+    const showPanel = () => {
+        panel.classList.remove('is-hidden');
+        toggleBtn.classList.add('is-active');
+    };
+
+    const hidePanel = () => {
+        if (isPinned) return; 
+        panel.classList.add('is-hidden');
+        toggleBtn.classList.remove('is-active');
+    };
+
+    toggleBtn.addEventListener('click', () => {
+        panel.classList.toggle('is-hidden');
+        toggleBtn.classList.toggle('is-active');
+    });
+
+    refreshBtn.addEventListener('click', display);
+
+    pinBtn.addEventListener('click', () => {
+        isPinned = !isPinned;
+        pinBtn.classList.toggle('is-pinned', isPinned);
+    });
+
+    list.addEventListener('click', (event) => {
         if (event.target.classList.contains('prompt-item')) {
             if (userInput.disabled) return; 
-            
-            const promptText = event.target.innerText;
-            userInput.value = promptText;
-            
+            userInput.value = event.target.innerText;
             const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-            document.getElementById('chat-form').dispatchEvent(submitEvent);
+            chatForm.dispatchEvent(submitEvent);
         }
     });
 
-    // 2. จัดการการคลิกที่ปุ่มซ่อน
-    hidePromptsBtn.addEventListener('click', () => {
-        promptsContainer.classList.add('hidden');
-    });
+    panel.displayNewPrompts = display;
+    panel.hidePrompts = hidePanel;
 
-    // --- ⭐️ สิ้นสุดส่วนที่เพิ่ม ⭐️ ---
-
-    // ผูกฟังก์ชันไว้กับ Element เพื่อให้ script.js หลักเรียกใช้ได้
-    promptsContainer.displayNewPrompts = () => {
-        // หลังจากสนทนาแรก เราจะซ่อนกล่องไปเลย
-        promptsContainer.classList.add('hidden');
-    };
-    promptsContainer.hidePrompts = () => { 
-        promptsContainer.classList.add('hidden');
-    };
-
-    // แสดงผลครั้งแรก
-    display();
+    hidePanel();
 }
 
 document.addEventListener('DOMContentLoaded', initializeSuggestedPrompts);

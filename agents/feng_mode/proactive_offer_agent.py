@@ -44,13 +44,13 @@ class ProactiveOfferAgent:
 
     def _get_intuitive_context(self, query: str) -> str:
         """
-        ใช้ KGRAGEngine เพื่อดึง "สัญชาตญาณ" สำหรับการเสนอการวิเคราะห์ต่อ
+        ใช้ KGRAGEngine (ผ่าน RAGEngine) เพื่อดึง "สัญชาตญาณ" สำหรับการเสนอการวิเคราะห์ต่อ
         """
-        print(f"  - 🕸️  Searching KG-RAG for proactive offer about: '{query}'")
+        print(f"  - 🕸️  Searching KG--RAG for proactive offer about: '{query}'")
         if not self.rag_engine:
             return "ไม่มี"
         
-        results = self.rag_engine(query, top_k=1)
+        results = self.rag_engine.search_graph(query, top_k=1)
         
         if not results:
             return "ไม่มี"
@@ -58,7 +58,6 @@ class ProactiveOfferAgent:
         item = results[0]
         context = f"- '{item.get('name')}': {item.get('description', '')}"
         return context
-
     def handle(self, query: str) -> Dict[str, Any]:
         print(f"🤔 [Proactive Offer Agent] Handling: '{query[:40]}...'")
         try:

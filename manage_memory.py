@@ -1,8 +1,7 @@
 # manage_memory.py
-# (V11 - The Final, Timestamp-Aware Processor)
+# (V12.1 - Standardized Builder Architecture, No-LLM)
 
 import sqlite3
-from groq import Groq
 import faiss
 import json
 import os
@@ -10,29 +9,19 @@ import torch
 import time
 from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Any
-from core.config import settings
-from core.groq_key_manager import GroqApiKeyManager, AllGroqKeysOnCooldownError
-import numpy as np
-import traceback
+import re
 
-class MemoryConsolidator:
-    def __init__(self, key_manager: GroqApiKeyManager, ltm_model: str, embedding_model_name: str):
-        print("\n" + "="*60)
-        print("--- 🏛️  Initializing Memory Consolidation Process (V11 - Timestamp-Aware)  🏛️ ---")
-        print("="*60)
-        
+class MemoryBuilder:
+    def __init__(self, model_name="intfloat/multilingual-e5-large"):
         self.DB_PATH = "data/memory.db"
         self.MEMORY_INDEX_DIR = "data/memory_index"
         self.MEMORY_FAISS_PATH = os.path.join(self.MEMORY_INDEX_DIR, "memory_faiss.index")
         self.MEMORY_MAPPING_PATH = os.path.join(self.MEMORY_INDEX_DIR, "memory_mapping.jsonl")
         
-        self.key_manager = key_manager
-        self.ltm_model_name = ltm_model
-        
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"⚙️  Initializing embedder on device: {device.upper()}")
-        self.embedding_model = SentenceTransformer(embedding_model_name, device=device)
-        print(f"✅ Embedding model '{embedding_model_name}' loaded successfully.")
+        print(f"⚙️  Memory Builder is initializing on device: {device.upper()}")
+        self.model = SentenceTransformer(model_name, device=device)
+        print(f"✅ Embedding model '{model_name}' loaded successfully.")
 
         self._ensure_db_schema()
 
@@ -61,6 +50,15 @@ class MemoryConsolidator:
                     role TEXT NOT NULL, content TEXT NOT NULL, agent_used TEXT
                 )
             ''')
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS archived_conversations (
+                    id INTEGER, timestamp DATETIME, session_id TEXT,
+                    role TEXT, content TEXT, agent_used TEXT,
+                    PRIMARY KEY (session_id, id)
+                )
+            """)
+            conn.commit()
+            print("🗄️  LTM DB Schema (V12.3 - Archiving) is ready.")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_ltm_session_id ON long_term_memories(session_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_ch_session_id ON conversation_history(session_id)")
             conn.commit()
@@ -102,58 +100,35 @@ class MemoryConsolidator:
             print(f"❌ Could not retrieve conversation chunks: {e}")
             return []
 
-    def extract_structured_memories(self, conversation_chunks: List[Dict[str, Any]]) -> (List[Dict], List[Dict]):
-        if not conversation_chunks: return [], []
-        successful_memories, failed_chunks = [], []
-        print(f"🧠 Processing {len(conversation_chunks)} conversation chunks...")
-        prompt_template = """
-คุณคือ AI ผู้เชี่ยวชาญด้านการย่อยข้อมูล (Data Distiller) ภารกิจของคุณคือการวิเคราะห์บทสนทนาทั้งหมด และสกัด "แก่นของความทรงจำ" ที่สำคัญที่สุดออกมา
-
-**กฎ:**
-- **ตอบกลับเป็น JSON object ที่สมบูรณ์เท่านั้น** ห้ามมีข้อความอื่นใดๆ
-
-**โครงสร้าง JSON ที่ต้องการ:**
-{{
-  "title": "หัวข้อหลักของความทรงจำนี้ (4-5 คำ)",
-  "summary": "สรุปใจความสำคัญของสิ่งที่ได้เรียนรู้หรือตัดสินใจในบทสนทนานี้ (1-2 ประโยค)",
-  "keywords": ["คำสำคัญที่เกี่ยวข้อง 3-5 คำ"]
-}}
-
-**บทสนทนาเพื่อวิเคราะห์:**
----
-{transcript}
----
-
-**ผลลัพธ์ (JSON Object เท่านั้น):**
-"""
+    def extract_memories_from_chunks(self, conversation_chunks: List[Dict[str, Any]]) -> List[Dict]:
+        if not conversation_chunks: return []
+        
+        print(f"\n--- ✍️  Extracting memories from {len(conversation_chunks)} chunks (Rule-based)... ---")
+        successful_memories = []
+        
         for chunk in conversation_chunks:
-            api_key = None
             try:
-                api_key = self.key_manager.get_key()
-                client = Groq(api_key=api_key)
-                transcript = "\n".join([f"- {msg['role']}: {msg['content']}" for msg in chunk['messages']])
-                prompt = prompt_template.format(transcript=transcript)
+                user_messages = [msg['content'] for msg in chunk['messages'] if msg['role'] == 'user']
+                model_messages = [msg['content'] for msg in chunk['messages'] if msg['role'] == 'model']
 
-                print(f"  - Processing chunk for session: {chunk['session_id']} (messages {chunk['start_message_id']}-{chunk['end_message_id']})...")
-                chat_completion = client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt}], model=self.ltm_model_name,
-                    response_format={"type": "json_object"}
-                )
-                memory_data = json.loads(chat_completion.choices[0].message.content)
-                if isinstance(memory_data, dict):
-                    memory_data.update(chunk)
-                    successful_memories.append(memory_data)
-            except AllGroqKeysOnCooldownError as e:
-                raise e
+                if not user_messages or not model_messages: continue
+
+                title = user_messages[0][:100]
+                summary = model_messages[-1]
+                keywords = list(set(re.findall(r'\b\w{4,}\b', title.lower())))[:5]
+
+                memory_data = {
+                    "title": title, "summary": summary, "keywords": keywords
+                }
+                memory_data.update(chunk)
+                successful_memories.append(memory_data)
             except Exception as e:
-                print(f"  ❌ Error processing chunk for session {chunk['session_id']}: {e}")
-                if api_key: self.key_manager.report_failure(api_key)
-                failed_chunks.append(chunk)
-                
-        print(f"✅ Extracted {len(successful_memories)} memories. Failed chunks: {len(failed_chunks)}")
-        return successful_memories, failed_chunks
+                print(f"  - ⚠️ Error processing chunk for session {chunk['session_id']} with rules: {e}")
+        
+        print(f"  - ✅ Extracted {len(successful_memories)} memories successfully.")
+        return successful_memories
 
-    def save_memories_and_update_index(self, memories: List[Dict]):
+    def save_memories_to_db(self, memories: List[Dict]):
         if not memories: return
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
@@ -166,93 +141,133 @@ class MemoryConsolidator:
                          mem['start_message_id'], mem['end_message_id'], 
                          mem['conversation_start_time'], mem['conversation_end_time'])
                     )
-                    cursor.execute(
-                        "INSERT INTO memory_processing_state (session_id, last_processed_id) VALUES (?, ?) ON CONFLICT(session_id) DO UPDATE SET last_processed_id = excluded.last_processed_id",
-                        (mem['session_id'], mem['end_message_id'])
-                    )
                 conn.commit()
-                print(f"💾 Saved {len(memories)} new memories (with timestamps) and updated processing state.")
+                print(f"  - 💾 Saved {len(memories)} new memories to database.")
         except Exception as e:
-            print(f"❌ Could not save memories to DB: {e}")
-            traceback.print_exc()
-            return
+            print(f"  - ❌ Could not save memories to DB: {e}")
 
-        texts_to_embed = [f"หัวข้อ: {mem.get('title', '')}\nสรุป: {mem.get('summary', '')}" for mem in memories]
-        new_embeddings = self.embedding_model.encode(["passage: " + text for text in texts_to_embed], show_progress_bar=True, convert_to_numpy=True).astype("float32")
-        
-        os.makedirs(self.MEMORY_INDEX_DIR, exist_ok=True)
-        if os.path.exists(self.MEMORY_FAISS_PATH):
-            index = faiss.read_index(self.MEMORY_FAISS_PATH)
-            index.add(new_embeddings)
-            with open(self.MEMORY_MAPPING_PATH, "a", encoding="utf-8") as f:
-                for memory in memories: f.write(json.dumps(memory, ensure_ascii=False) + "\n")
-        else:
-            index = faiss.IndexFlatL2(new_embeddings.shape[1])
-            index.add(new_embeddings)
-            with open(self.MEMORY_MAPPING_PATH, "w", encoding="utf-8") as f:
-                for memory in memories: f.write(json.dumps(memory, ensure_ascii=False) + "\n")
-            
-        faiss.write_index(index, self.MEMORY_FAISS_PATH)
-        print(f"✅ Memory RAG Index updated successfully! Total memories: {index.ntotal}")
-
-    def _skip_failed_chunks(self, failed_chunks: List[Dict]):
-        if not failed_chunks: return
-        print(f"⏭️  Skipping {len(failed_chunks)} failed chunks by updating their processing state...")
+    def update_processing_state(self, chunks: List[Dict]):
+        if not chunks: return
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
                 cursor = conn.cursor()
-                for chunk in failed_chunks:
+                for chunk in chunks:
                     cursor.execute(
                         "INSERT INTO memory_processing_state (session_id, last_processed_id) VALUES (?, ?) ON CONFLICT(session_id) DO UPDATE SET last_processed_id = excluded.last_processed_id",
                         (chunk['session_id'], chunk['end_message_id'])
                     )
                 conn.commit()
-            print("✅ Failed chunks have been skipped.")
+            print(f"  - 🔄 Updated processing state for {len(chunks)} chunks.")
         except Exception as e:
-            print(f"❌ Could not update state for failed chunks: {e}")
+            print(f"  - ❌ Could not update processing state: {e}")
 
-    def run_one_batch(self, num_sessions: int = 5, chunk_size: int = 20) -> bool:
-        unprocessed_chunks = self.get_unprocessed_conversation_chunks(num_sessions=num_sessions, chunk_size=chunk_size) 
-        if not unprocessed_chunks:
-            return False
+    def build_and_save_index(self, memories: List[Dict]):
+        if not memories:
+            print("  - 🟡 No new memories to index.")
+            return
 
-        successful_memories, failed_chunks = self.extract_structured_memories(unprocessed_chunks)
+        print(f"\n--- 🏭 Building/Updating Memory RAG Index ---")
+        os.makedirs(self.MEMORY_INDEX_DIR, exist_ok=True)
         
-        if successful_memories:
-            self.save_memories_and_update_index(successful_memories)
-        
-        if failed_chunks:
-            self._skip_failed_chunks(failed_chunks)
-        
-        return True
+        texts_to_embed = []
+        mapping_data = []
+        for mem in memories:
+            embedding_text = f"หัวข้อ: {mem.get('title', '')}\nสรุป: {mem.get('summary', '')}"
+            texts_to_embed.append("passage: " + embedding_text)
+            
+            mem_copy = mem.copy()
+            mem_copy['embedding_text'] = embedding_text
+            mapping_data.append(mem_copy)
 
-def main():
-    try:
-        key_manager = GroqApiKeyManager(all_groq_keys=settings.GROQ_API_KEYS, silent=True)
-        consolidator = MemoryConsolidator(
-            key_manager=key_manager, ltm_model=settings.LTM_MODEL,
-            embedding_model_name="intfloat/multilingual-e5-large"
-        )
+        print(f"  - 🧠 Generating {len(texts_to_embed)} new embeddings (using {str(self.model.device).upper()})...")
+        new_embeddings = self.model.encode(
+            texts_to_embed, 
+            show_progress_bar=True, 
+            convert_to_numpy=True
+        ).astype("float32")
         
-        while True:
-            print("\n" + "-"*20 + " Starting a new processing run " + "-"*20)
-            more_work_found = consolidator.run_one_batch(num_sessions=5, chunk_size=15)
-            if not more_work_found:
-                print("\n🎉 All sessions are fully processed and up-to-date!")
-                break
-            print("...More messages might exist, starting next run in 1 second...")
-            time.sleep(1)
-    except AllGroqKeysOnCooldownError as e:
-        print(f"\n🔥🔥🔥 API KEYS EXHAUSTED - CRITICAL FAILURE 🔥🔥🔥")
-        print(f"   -> Reason: {e}")
-        print(f"   -> Halting the process. Rerun the script later to continue from where it left off.")
-    except Exception as e:
-        print(f"❌ A critical error occurred in the main process: {e}")
-        traceback.print_exc()
-    finally:
-        print("\n" + "="*60)
-        print("--- 🏛️  Memory Consolidation Process Finished  🏛️ ---")
-        print("="*60)
+        if os.path.exists(self.MEMORY_FAISS_PATH):
+            print("  -  appending to existing index...")
+            index = faiss.read_index(self.MEMORY_FAISS_PATH)
+            index.add(new_embeddings)
+            with open(self.MEMORY_MAPPING_PATH, "a", encoding="utf-8") as f:
+                for item in mapping_data:
+                    f.write(json.dumps(item, ensure_ascii=False) + "\n")
+        else:
+            print("  - creating new index...")
+            index = faiss.IndexFlatL2(new_embeddings.shape[1])
+            index.add(new_embeddings)
+            with open(self.MEMORY_MAPPING_PATH, "w", encoding="utf-8") as f:
+                for item in mapping_data:
+                    f.write(json.dumps(item, ensure_ascii=False) + "\n")
+            
+        faiss.write_index(index, self.MEMORY_FAISS_PATH)
+        print(f"  - ✅ Memory RAG Index updated successfully! Total memories in index: {index.ntotal}")
+    def archive_processed_conversations(self, chunks: List[Dict]):
+        """
+        ย้ายข้อความดิบใน conversation_history ที่ถูกประมวลผลแล้ว
+        ไปเก็บไว้ในตาราง archived_conversations
+        """
+        if not chunks: return
+        
+        print(f"\n--- 🗄️  Archiving {len(chunks)} processed conversation chunks... ---")
+        try:
+            with sqlite3.connect(self.DB_PATH) as conn:
+                cursor = conn.cursor()
+                total_moved = 0
+                for chunk in chunks:
+                    session_id = chunk['session_id']
+                    end_id = chunk['end_message_id']
+                    
+                    cursor.execute(
+                        """
+                        INSERT INTO archived_conversations (id, timestamp, session_id, role, content, agent_used)
+                        SELECT id, timestamp, session_id, role, content, agent_used
+                        FROM conversation_history
+                        WHERE session_id = ? AND id <= ?
+                        """,
+                        (session_id, end_id)
+                    )
+                    
+                    cursor.execute(
+                        "DELETE FROM conversation_history WHERE session_id = ? AND id <= ?",
+                        (session_id, end_id)
+                    )
+                    total_moved += cursor.rowcount
+                
+                conn.commit()
+                print(f"  - ✅ Archived and cleaned up {total_moved} old messages.")
+                
+                print("  - Running VACUUM to reclaim disk space...")
+                conn.execute("VACUUM")
+                
+        except Exception as e:
+            print(f"  - ❌ Could not archive processed conversations: {e}")
+
 
 if __name__ == "__main__":
-    main()
+    print("\n" + "="*60)
+    print("--- 🏛️  Starting Memory Consolidation & Indexing Process  🏛️ ---")
+    print("="*60)
+
+    builder = MemoryBuilder()
+    while True:
+        print("\n" + "-"*20 + " Starting a new processing run " + "-"*20)
+        
+        unprocessed_chunks = builder.get_unprocessed_conversation_chunks(num_sessions=10, chunk_size=20)
+        if not unprocessed_chunks:
+            print("\n🎉 All sessions are fully processed and up-to-date!")
+            break
+        
+        new_memories = builder.extract_memories_from_chunks(unprocessed_chunks)
+        builder.save_memories_to_db(new_memories)
+        builder.build_and_save_index(new_memories)
+        builder.update_processing_state(unprocessed_chunks)
+        builder.archive_processed_conversations(unprocessed_chunks)
+        
+        print("...More messages might exist, starting next run in 1 second...")
+        time.sleep(1)
+
+    print("\n" + "="*60)
+    print("--- 🏛️  Memory Consolidation Process Finished  🏛️ ---")
+    print("="*60)
