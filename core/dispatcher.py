@@ -12,6 +12,7 @@ class FinalResponse(BaseModel):
     history: Optional[List[Dict[str, str]]] = None
     error: bool = False
     thought_process: Optional[Dict[str, Any]] = None
+    voice_url: Optional[str] = None
 
 class Dispatcher:
     def __init__(self, agents: Dict, key_manager):
