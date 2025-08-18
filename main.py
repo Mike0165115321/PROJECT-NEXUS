@@ -3,7 +3,7 @@
 # --- Project Nexus AI Assistant Server ---
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -49,6 +49,23 @@ web_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 AGENTS = {}
 GRAPH_MANAGER: GraphManager = None
 DISPATCHER: Dispatcher = None
+audio_tasks = {}
+
+def create_audio_file_background(text: str, output_path: str, task_id: str):
+    """ฟังก์ชันนี้จะถูกรันใน Background เพื่อสร้างไฟล์เสียง"""
+    try:
+        print(f"🎙️  Starting background audio synthesis for task: {task_id}")
+        tts_agent = AGENTS.get("TTS")
+        if tts_agent:
+            voice_file_path = tts_agent.synthesize(text, output_path)
+            if voice_file_path:
+                audio_tasks[task_id] = {"status": "done", "url": f"/static/audio/{os.path.basename(output_path)}"}
+                print(f"  - ✅ Audio task {task_id} completed.")
+                return
+        audio_tasks[task_id] = {"status": "failed", "error": "TTS agent not found or synthesis failed"}
+    except Exception as e:
+        print(f"  - ❌ Background audio synthesis failed for task {task_id}: {e}")
+        audio_tasks[task_id] = {"status": "failed", "error": str(e)}
 
 async def cleanup_old_audio_files():
     """Service ที่ทำงานเบื้องหลังเพื่อลบไฟล์เสียงเก่า"""
@@ -203,27 +220,25 @@ async def serve_frontend():
     return FileResponse(os.path.join(web_dir, 'index.html'))
 
 @app.post("/ask", response_model=FinalResponse)
-async def ask_assistant(request: QueryRequest):
+async def ask_assistant(request: QueryRequest, background_tasks: BackgroundTasks):
     if not DISPATCHER:
         raise HTTPException(status_code=503, detail="Server is still initializing or has failed.")
     try:
-        # --- ⭐️ แก้ไขจุดที่ 2: แก้ไข Typo ⭐️ ---
         response = await DISPATCHER.handle_query(request.query, request.user_id)
 
         if response.answer and not response.error:
-            tts_agent = AGENTS.get("TTS")
-            if tts_agent:
-                audio_dir = os.path.join(web_dir, "static", "audio")
-                os.makedirs(audio_dir, exist_ok=True)
-                
-                timestamp = int(time.time())
-                filename = f"response_{request.user_id}_{timestamp}.mp3"
-                output_path = os.path.join(audio_dir, filename)
-                
-                voice_file_path = tts_agent.synthesize(response.answer, output_path)
-                
-                if voice_file_path:
-                    response.voice_url = f"/static/audio/{filename}"
+            timestamp = int(time.time())
+            filename = f"response_{request.user_id}_{timestamp}.mp3"
+            task_id = filename
+            
+            audio_dir = os.path.join(web_dir, "static", "audio")
+            os.makedirs(audio_dir, exist_ok=True)
+            output_path = os.path.join(audio_dir, filename)
+            
+            audio_tasks[task_id] = {"status": "processing"}
+            background_tasks.add_task(create_audio_file_background, response.answer, output_path, task_id)
+            
+            response.voice_task_id = task_id
 
         return response
         
@@ -231,6 +246,17 @@ async def ask_assistant(request: QueryRequest):
         print(f"❌ Unhandled error in /ask endpoint: {e}")
         traceback.print_exc()
         return FinalResponse(agent_used="FATAL_ERROR", answer="ขออภัยครับ เกิดข้อผิดพลาดร้ายแรง", error=True)
+
+@app.get("/audio_status/{task_id}")
+async def get_audio_status(task_id: str):
+    task = audio_tasks.get(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    if task["status"] in ["done", "failed"]:
+        return audio_tasks.pop(task_id)
+        
+    return task
 
 @app.get("/api/graph/explore", tags=["Knowledge Graph"])
 def get_graph_data_for_visualization(entity: str, limit: int = 25):

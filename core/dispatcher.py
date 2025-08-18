@@ -13,6 +13,7 @@ class FinalResponse(BaseModel):
     error: bool = False
     thought_process: Optional[Dict[str, Any]] = None
     voice_url: Optional[str] = None
+    voice_task_id: Optional[str] = None
 
 class Dispatcher:
     def __init__(self, agents: Dict, key_manager):
