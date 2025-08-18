@@ -1,5 +1,4 @@
-// web/static/thoughtProcessManager.js
-// (V1.0 - Dedicated Thought Process UI Management)
+// (V2.2 - Polished with Animations & Agent-Specific Colors)
 
 export function createThoughtProcessManager() {
     const elements = {
@@ -11,6 +10,24 @@ export function createThoughtProcessManager() {
     const state = {
         isTpVisible: true,
     };
+
+    const statusMap = new Map([
+        ['RECEIVED', { icon: '📥', text: 'ได้รับคำสั่ง' }],
+        ['ROUTING', { icon: '🚦', text: 'วิเคราะห์เจตนา' }],
+        ['PROCESSING', { icon: '⚙️', text: 'ประมวลผล' }],
+        ['DEEP_ANALYSIS', { icon: '🧠', text: 'วิเคราะห์เชิงลึก' }],
+        ['FORMATTING', { icon: '✍️', text: 'เรียบเรียงคำตอบ' }],
+    ]);
+
+    const agentMap = new Map([
+        ['FENG', { color: 'var(--color-highlight)' }], 
+        ['PLANNER', { color: 'var(--color-accent)' }],
+        ['GENERAL_HANDLER', { color: '#b294c7' }],
+        ['FORMATTER', { color: '#8abda0' }], 
+        ['NEWS', { color: '#e07a5f' }], 
+        ['CODER', { color: '#6a9fb5' }],
+        ['COUNSELOR', { color: '#c88ea5' }] // เพิ่มสีสำหรับ Counselor
+    ]);
 
     function setupEventListeners() {
         elements.tpToggleBtn?.addEventListener('click', () => {
@@ -27,58 +44,45 @@ export function createThoughtProcessManager() {
         elements.tpToggleBtn.textContent = state.isTpVisible ? 'ซ่อน' : 'แสดง';
     }
 
-    function clear(message = 'กำลังประมวลผลความคิด...') {
+    function clear(message = 'ถามคำถามในช่องแชทเพื่อดูการทำงานของฉันที่นี่') {
         if (!elements.tpContent) return;
         elements.tpContent.innerHTML = `<div class="tp-placeholder"><p>${message}</p></div>`;
     }
 
-    async function display(tp) {
+    function addStep(stepData) {
         if (!elements.tpContent) return;
-        elements.tpContent.innerHTML = '';
-
-        if (tp.error) {
-            appendSection('เกิดข้อผิดพลาดใน Backend', `<p>Agent พบปัญหา:</p><code>${tp.error}</code>`, 'error');
-            return;
+        const placeholder = elements.tpContent.querySelector('.tp-placeholder');
+        if (placeholder) {
+            placeholder.remove();
         }
 
-        if (tp.search_logs?.length > 0) {
-            const list = await createAnimatedList(tp.search_logs);
-            appendSection('เบื้องหลังการค้นหา:', list);
-        }
-    }
+        const stepDiv = document.createElement('div');
+        stepDiv.className = 'tp-step';
 
-    function appendSection(title, content, type = '') {
-        const section = document.createElement('div');
-        section.className = `tp-section ${type}`;
-        section.innerHTML = `<h4>${title}</h4>`;
-        if (typeof content === 'string') {
-            section.innerHTML += content;
-        } else {
-            section.appendChild(content);
+        const agentInfo = agentMap.get(stepData.agent);
+        if (agentInfo) {
+            stepDiv.style.setProperty('--step-color', agentInfo.color);
         }
-        elements.tpContent.appendChild(section);
+
+        const statusInfo = statusMap.get(stepData.status) || { icon: '🔹', text: stepData.status };
+        
+        stepDiv.innerHTML = `
+            <div class="tp-step-header">
+                <span class="tp-step-icon">${statusInfo.icon}</span>
+                <span class="tp-step-title">${statusInfo.text}: ${stepData.agent || ''}</span>
+            </div>
+            <div class="tp-step-detail">${stepData.detail}</div>
+        `;
+        elements.tpContent.appendChild(stepDiv);
         elements.tpContent.scrollTop = elements.tpContent.scrollHeight;
-    }
-
-    async function createAnimatedList(items) {
-        const ul = document.createElement('ul');
-        ul.className = 'search-logs-list';
-        for (const item of items) {
-            await new Promise(resolve => setTimeout(resolve, 150));
-            const li = document.createElement('li');
-            li.textContent = item;
-            ul.appendChild(li);
-            elements.tpContent.scrollTop = elements.tpContent.scrollHeight;
-        }
-        return ul;
     }
 
     setupEventListeners();
     updateLayout();
-    clear("ถามคำถามในช่องแชทเพื่อดูการเชื่อมโยงข้อมูลของฉันที่นี่");
+    clear(); 
 
     return {
         clear,
-        display,
+        addStep,
     };
 }

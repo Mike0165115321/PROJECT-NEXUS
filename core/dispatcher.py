@@ -3,7 +3,7 @@
 
 import traceback
 from pydantic import BaseModel
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Callable 
 
 class FinalResponse(BaseModel):
     agent_used: str
@@ -36,14 +36,14 @@ class Dispatcher:
         """
         return [{"role": h.get("role"), "parts": h.get("content")} for h in history_dicts]
 
-    async def handle_query(self, query: str, user_id: str) -> FinalResponse:
+    async def handle_query(self, query: str, user_id: str, update_callback: Optional[Callable] = None) -> FinalResponse:
         self.memory_manager.add_memory(role="user", content=query, session_id=user_id, agent_used="USER")
         
         try:
             pending_query = self.memory_manager.check_and_clear_pending_deep_dive(user_id, user_confirmation=query)
             if pending_query:
                 print(f"✅ User confirmed deep dive. Routing to Planner for: '{pending_query}'")
-                return await self._run_deep_analysis(pending_query, user_id)
+                return await self._run_deep_analysis(pending_query, user_id, update_callback=update_callback)
 
             feng_agent = self.agents.get("FENG")
             if not feng_agent: raise ValueError("CRITICAL: FengAgent not found.")
@@ -54,9 +54,20 @@ class Dispatcher:
             if dispatch_order.get("type") == "final_answer":
                 print("🚦 Dispatcher: FengAgent provided a quick response. Finalizing.")
                 final_answer = dispatch_order.get("content", "ขออภัยครับ มีข้อผิดพลาดในการตอบกลับ")
-                return await self._finalize_response("FENG_QUICK_RESPONSE", final_answer, user_id)
+                return await self._finalize_response("FENG_QUICK_RESPONSE", final_answer, user_id, update_callback=update_callback)
 
             intent = dispatch_order.get("intent")
+            if update_callback:
+                await update_callback({
+                    "type": "progress", 
+                    "payload": {
+                        "status": "ROUTING", 
+                        "agent": "FENG", 
+                        "detail": f"วิเคราะห์เจตนาเป็น '{intent}' เรียบร้อย"
+                    }
+                })
+
+            corrected_query = dispatch_order.get("corrected_query", query)
             corrected_query = dispatch_order.get("corrected_query", query)
 
             intent_to_agent_map = {
@@ -84,39 +95,49 @@ class Dispatcher:
             if agent_name and (agent := self.agents.get(agent_name)):
                 print(f"🚦 Dispatcher: Routing intent '{intent}' to '{agent_name}'.")
                 
+                if update_callback:
+                    await update_callback({
+                        "type": "progress",
+                        "payload": {
+                            "status": "PROCESSING",
+                            "agent": agent_name,
+                            "detail": f"กำลังส่งคำสั่งให้ {agent_name}..."
+                        }
+                    })
+                
                 if agent_name in agents_needing_memory:
                     answer = agent.handle(corrected_query, short_mem)
-                    return await self._finalize_response(agent_name, answer, user_id)
+                    return await self._finalize_response(agent_name, answer, user_id, update_callback=update_callback)
 
                 elif agent_name == "PLANNER":
-                    return await self._run_deep_analysis(corrected_query, user_id)
+                    return await self._run_deep_analysis(corrected_query, user_id, update_callback=update_callback)
                 
                 elif agent_name == "PROACTIVE_OFFER_HANDLER":
                     response = agent.handle(corrected_query)
                     self.memory_manager.set_pending_deep_dive(user_id, response.get("original_query"))
-                    return await self._finalize_response("PROACTIVE_OFFER", response.get("content"), user_id)
+                    return await self._finalize_response("PROACTIVE_OFFER", response.get("content"), user_id, update_callback=update_callback)
 
                 elif agent_name == "NEWS":
                     response = agent.handle(corrected_query)
-                    return await self._finalize_response("NEWS", response.get("answer"), user_id, thought_process=response.get("thought_process"))
+                    return await self._finalize_response("NEWS", response.get("answer"), user_id, thought_process=response.get("thought_process"), update_callback=update_callback)
                 
                 elif agent_name == "IMAGE":
                     image_info = agent.handle(corrected_query)
                     if image_info:
                         answer = "นี่คือรูปภาพที่ผมหามาให้ครับ"
-                        return await self._finalize_response("IMAGE", answer, user_id, image_info=image_info)
+                        return await self._finalize_response("IMAGE", answer, user_id, image_info=image_info, update_callback=update_callback)
                     print(f"⚠️ Dispatcher: ImageAgent found no image. Defaulting to Planner.")
-                    return await self._run_deep_analysis(corrected_query, user_id)
+                    return await self._run_deep_analysis(corrected_query, user_id, update_callback=update_callback)
 
-                else:
+                else: # Utility agents
                     answer = agent.handle(corrected_query)
                     if answer is not None:
-                        return await self._finalize_response(agent_name, answer, user_id)
+                        return await self._finalize_response(agent_name, answer, user_id, update_callback=update_callback)
                     print(f"⚠️ Dispatcher: Utility Agent '{agent_name}' returned None. Defaulting to Planner.")
-                    return await self._run_deep_analysis(corrected_query, user_id)
+                    return await self._run_deep_analysis(corrected_query, user_id, update_callback=update_callback)
 
             print(f"⚠️ Dispatcher: Unknown or unhandled intent '{intent}'. Defaulting to Planner.")
-            return await self._run_deep_analysis(corrected_query, user_id)
+            return await self._run_deep_analysis(corrected_query, user_id, update_callback=update_callback)
 
         except Exception as e:
             print(f"❌ Unhandled error in Dispatcher handle_query: {e}")
@@ -127,15 +148,26 @@ class Dispatcher:
                 last_query = self.memory_manager.get_last_user_query(user_id)
                 error_context = f"An exception occurred: {type(e).__name__} - {e}"
                 apology_answer = apology_agent.handle(last_query, error_context)
-                return await self._finalize_response("APOLOGY_HANDLER", apology_answer, user_id, is_error=True)
+                return await self._finalize_response("APOLOGY_HANDLER", apology_answer, user_id, is_error=True, update_callback=update_callback)
             
-            return await self._finalize_response("DISPATCHER_ERROR", "ขออภัยครับ เกิดข้อผิดพลาดร้ายแรงในระบบจัดการ", user_id, is_error=True)
+            return await self._finalize_response("DISPATCHER_ERROR", "ขออภัยครับ เกิดข้อผิดพลาดร้ายแรงในระบบจัดการ", user_id, is_error=True, update_callback=update_callback)
 
-    async def _run_deep_analysis(self, query: str, user_id: str) -> FinalResponse:
+    async def _run_deep_analysis(self, query: str, user_id: str, update_callback: Optional[Callable] = None) -> FinalResponse:
         """
         ฟังก์ชันย่อยสำหรับรันกระบวนการวิเคราะห์เชิงลึกทั้งหมด
         """
         print(f"🧠 Dispatcher: Initiating deep analysis for query: '{query}'")
+        
+        if update_callback:
+            await update_callback({
+                "type": "progress",
+                "payload": {
+                    "status": "DEEP_ANALYSIS",
+                    "agent": "PLANNER",
+                    "detail": "เริ่มต้นกระบวนการวิเคราะห์เชิงลึก..."
+                }
+            })
+
         planner_agent = self.agents.get("PLANNER")
         if not planner_agent:
             raise ValueError("CRITICAL: PlannerAgent not found.")
@@ -147,11 +179,12 @@ class Dispatcher:
         final_draft = planner_result.get("answer", "ขออภัย มีข้อผิดพลาดในการสร้างบทวิเคราะห์")
         thought_process = planner_result.get("thought_process")
         
-        return await self._finalize_response("PLANNER", final_draft, user_id, thought_process=thought_process)
+        return await self._finalize_response("PLANNER", final_draft, user_id, thought_process=thought_process, update_callback=update_callback)
 
     async def _finalize_response(self, agent_used: str, answer: str, user_id: str, 
                                  image_info: Optional[Dict] = None, is_error: bool = False,
-                                 thought_process: Optional[Dict] = None) -> FinalResponse:
+                                 thought_process: Optional[Dict] = None, 
+                                 update_callback: Optional[Callable] = None) -> FinalResponse:
         """
         ฟังก์ชันย่อยสำหรับขั้นตอนสุดท้าย: การจัดรูปแบบและบันทึกความทรงจำ
         """
@@ -163,6 +196,16 @@ class Dispatcher:
              if formatter:
                  print(f"✍️ Dispatcher: Passing draft from {agent_used} to Formatter Agent.")
                  
+                 if update_callback:
+                    await update_callback({
+                        "type": "progress",
+                        "payload": {
+                            "status": "FORMATTING",
+                            "agent": "FORMATTER",
+                            "detail": "กำลังเรียบเรียงและจัดรูปแบบคำตอบสุดท้าย..."
+                        }
+                    })
+
                  synthesis_order = {
                      "original_query": self.memory_manager.get_last_user_query(user_id),
                      "history": self.memory_manager.get_last_n_memories(session_id=user_id, n=4),

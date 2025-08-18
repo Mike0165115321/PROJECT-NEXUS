@@ -3,7 +3,7 @@
 # --- Project Nexus AI Assistant Server ---
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -51,7 +51,7 @@ GRAPH_MANAGER: GraphManager = None
 DISPATCHER: Dispatcher = None
 audio_tasks = {}
 
-def create_audio_file_background(text: str, output_path: str, task_id: str):
+async def create_audio_file_background(text: str, output_path: str, task_id: str):
     """ฟังก์ชันนี้จะถูกรันใน Background เพื่อสร้างไฟล์เสียง"""
     try:
         print(f"🎙️  Starting background audio synthesis for task: {task_id}")
@@ -218,6 +218,53 @@ class QueryRequest(BaseModel):
 @app.get("/", include_in_schema=False)
 async def serve_frontend():
     return FileResponse(os.path.join(web_dir, 'index.html'))
+
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str):
+    await websocket.accept()
+    print(f"🔗 WebSocket connection established for user: {user_id}")
+    try:
+        while True:
+            query = await websocket.receive_text()
+            
+            async def send_update(data: dict):
+                await websocket.send_json(data)
+
+            if not DISPATCHER:
+                await send_update({"type": "error", "payload": {"detail": "Server is initializing."}})
+                continue
+            
+            try:
+                await send_update({"type": "progress", "payload": {"status": "RECEIVED", "detail": "ได้รับคำสั่งแล้ว กำลังประมวลผล..."}})
+                
+                response_model = await DISPATCHER.handle_query(query, user_id, update_callback=send_update)
+                
+                if response_model.answer and not response_model.error:
+                    timestamp = int(time.time())
+                    filename = f"response_{user_id}_{timestamp}.mp3"
+                    task_id = filename
+                    
+                    audio_dir = os.path.join(web_dir, "static", "audio")
+                    os.makedirs(audio_dir, exist_ok=True)
+                    output_path = os.path.join(audio_dir, filename)
+                    
+                    audio_tasks[task_id] = {"status": "processing"}
+                    asyncio.create_task(create_audio_file_background(response_model.answer, output_path, task_id))
+                    
+                    response_model.voice_task_id = task_id
+                final_data = response_model.dict()
+                await send_update({"type": "final_response", "payload": final_data})
+
+            except Exception as e:
+                print(f"❌ Error during WebSocket processing for user {user_id}: {e}")
+                traceback.print_exc()
+                await send_update({"type": "error", "payload": {"detail": "เกิดข้อผิดพลาดร้ายแรงระหว่างการประมวลผล"}})
+
+    except WebSocketDisconnect:
+        print(f"👋 WebSocket connection closed for user: {user_id}")
+    except Exception as e:
+        print(f"❌ Unhandled WebSocket error for user {user_id}: {e}")
+        await websocket.close(code=1011)
 
 @app.post("/ask", response_model=FinalResponse)
 async def ask_assistant(request: QueryRequest, background_tasks: BackgroundTasks):

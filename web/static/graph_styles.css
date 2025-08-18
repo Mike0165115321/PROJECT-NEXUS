@@ -117,3 +117,40 @@
     margin: 0;
     color: #ccc;
 }
+/* --- 11. Polished Thought Process Panel Styles --- */
+
+.tp-step {
+    /* ใช้ --step-color ที่เรากำหนดจาก JS, ถ้าไม่มีให้ใช้สี border ปกติ */
+    border-left: 3px solid var(--step-color, var(--color-border));
+    
+    /* เพิ่ม Animation */
+    animation: stepFadeIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.tp-step-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tp-step-icon {
+    /* ทำให้ไอคอนมีสีเดียวกับเส้นขอบ */
+    color: var(--step-color, var(--color-text-primary));
+    font-size: 1.2em;
+}
+
+.tp-step-detail {
+    padding-left: 32px; /* จัดย่อหน้าให้สวยงาม */
+}
+
+/* Keyframe สำหรับ Animation */
+@keyframes stepFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

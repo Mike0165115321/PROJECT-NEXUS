@@ -105,14 +105,20 @@ def scrape_article_content(url: str) -> str:
         article = Article(url, config=config)
         article.download()
         article.parse()
-            
-        return article.text
+
+        return sanitize_text(article.text)     
     except ArticleException:
         # ดักจับ Error เฉพาะของ newspaper3k (เช่น 404 Not Found)
         return ""
     except Exception:
         # ดักจับ Error ทั่วไปอื่นๆ
         return ""
+    
+def sanitize_text(text: str) -> str:
+    if not text:
+        return ""
+    # ลบตัวอักษรแปลก ๆ เช่น U+2028 (LS) และ U+2029 (PS)
+    return text.replace("\u2028", " ").replace("\u2029", " ")
 
 def load_existing_urls(mapping_path: str) -> Set[str]:
     """โหลด URL ของข่าวที่มีอยู่แล้วใน Index"""
@@ -227,7 +233,10 @@ def build_news_index(articles: List[Dict], batch_size: int = 64):
     for i in tqdm(range(0, len(articles), batch_size), desc="  - Encoding Batches"):
         batch_articles = articles[i:i+batch_size]
         
-        texts_to_embed = [f"หัวข้อ: {a.get('title', '')}\nเนื้อหา: {a.get('full_content', '')}" for a in batch_articles]
+        texts_to_embed = [
+                            f"หัวข้อ: {sanitize_text(a.get('title', ''))}\nเนื้อหา: {sanitize_text(a.get('full_content', ''))}"
+                            for a in batch_articles
+                        ]
         
         new_embeddings = model.encode(
             ["passage: " + text for text in texts_to_embed], 
@@ -242,6 +251,9 @@ def build_news_index(articles: List[Dict], batch_size: int = 64):
 
         start_id = len(mapping)
         for j, article in enumerate(batch_articles):
+            article['title'] = sanitize_text(article.get('title', ''))
+            article['description'] = sanitize_text(article.get('description', ''))
+            article['full_content'] = sanitize_text(article.get('full_content', ''))
             article['embedding_text'] = texts_to_embed[j]
             mapping[str(start_id + j)] = article
 
