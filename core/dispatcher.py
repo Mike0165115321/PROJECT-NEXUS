@@ -29,7 +29,6 @@ class Dispatcher:
         
         print("🚦 ผู้ควบคุมวงออร์เคสตรา (Dispatcher) ขึ้นประจำตำแหน่งบนโพเดียม")
 
-    # --- ⭐️ เพิ่มฟังก์ชันที่หายไปกลับเข้ามาที่นี่ ⭐️ ---
     def _format_history_for_display(self, history_dicts: List[Dict]) -> List[Dict[str, str]]:
         """
         แปลงรูปแบบ history จาก MemoryManager ให้เป็นรูปแบบที่ Frontend ต้องการ
@@ -48,7 +47,7 @@ class Dispatcher:
             feng_agent = self.agents.get("FENG")
             if not feng_agent: raise ValueError("CRITICAL: FengAgent not found.")
 
-            short_mem = self.memory_manager.get_last_n_memories(session_id=user_id, n=6)
+            short_mem = self.memory_manager.get_last_n_memories(session_id=user_id, n=4)
             dispatch_order = feng_agent.handle(query, short_mem)
             
             if dispatch_order.get("type") == "final_answer":

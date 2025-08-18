@@ -97,6 +97,10 @@ async def lifespan(app: FastAPI):
         )
         memory_manager_instance = MemoryManager()
         tts_engine_instance = TextToSpeechEngine()
+        ltm_manager_instance = LongTermMemoryManager(
+            embedding_model="intfloat/multilingual-e5-large",
+            index_dir="data/memory_index"
+        )
         AGENTS = {
             "MEMORY": memory_manager_instance,
             "SYSTEM": SystemAgent(),
@@ -121,6 +125,7 @@ async def lifespan(app: FastAPI):
                 key_manager=groq_key_manager,
                 model_name=settings.FENG_PRIMARY_MODEL,
                 rag_engine=rag_engine_instance,
+                ltm_manager=ltm_manager_instance,
                 persona_prompt=FENG_PERSONA_PROMPT
             ),
             "PROACTIVE_OFFER_HANDLER": ProactiveOfferAgent(
