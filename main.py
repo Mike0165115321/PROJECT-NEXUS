@@ -179,7 +179,7 @@ async def lifespan(app: FastAPI):
                 persona_prompt=FENG_PERSONA_PROMPT
             ),
             "NEWS": NewsAgent(
-                key_manager=groq_key_manager, 
+                key_manager=google_key_manager, 
                 model_name=settings.NEWS_AGENT_MODEL,
                 rag_engine=rag_engine_instance,
                 persona_prompt=FENG_PERSONA_PROMPT

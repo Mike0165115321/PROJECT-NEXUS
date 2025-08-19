@@ -31,7 +31,7 @@ class Settings:
     FENG_SECONDARY_MODEL = os.getenv("FENG_SECONDARY_MODEL", PRIMARY_GROQ_MODEL)
 
     # โมเดลสำหรับ "นักข่าว"
-    NEWS_AGENT_MODEL = os.getenv("NEWS_AGENT_MODEL", FENG_PRIMARY_MODEL)
+    NEWS_AGENT_MODEL = os.getenv("NEWS_AGENT_MODEL", PRIMARY_GEMINI_MODEL)
 
     # >> ⚙️ Utility Agents: สำหรับงานเบื้องหลังที่ไม่ซับซ้อน
     # เราเลือก Groq 8B เพื่อความเร็วและประหยัด
