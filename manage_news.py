@@ -48,7 +48,8 @@ RSS_FEEDS = {
     "The New York Times": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
     "The Guardian": "https://www.theguardian.com/world/rss",
     "Al Jazeera English": "https://www.aljazeera.com/xml/rss/all.xml",
-
+    
+    "Google News (TH)": "https://news.google.com/rss?hl=th&gl=TH&ceid=TH:th", 
     "Thai PBS": "https://www.thaipbs.or.th/rss/news.xml",
     "Thairath": "https://www.thairath.co.th/rss/news.xml",
     "The Standard": "https://thestandard.co/feed/",
