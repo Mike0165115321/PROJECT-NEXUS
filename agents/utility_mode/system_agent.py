@@ -37,7 +37,7 @@ class SystemAgent:
         thai_to_eng_app = {
             'เครื่องคิดเลข': 'calculator', 
             'เท็กซ์เอดิเตอร์': 'text_editor',
-            'โน้ตแพด': 'text_editor',
+            'โน๊ต': 'text_editor',
             'โครม': 'chrome',
             'เบราว์เซอร์': 'browser',
             'วีเอสโค้ด': 'vscode',
