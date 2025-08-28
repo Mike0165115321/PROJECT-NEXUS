@@ -70,13 +70,21 @@ class MemoryBuilder:
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
+                
                 cursor.execute("""
+                    WITH SessionMaxID AS (
+                        SELECT session_id, MAX(id) as max_id
+                        FROM conversation_history
+                        GROUP BY session_id
+                    )
                     SELECT T1.session_id, COALESCE(T2.last_processed_id, 0) as last_processed_id
-                    FROM (SELECT DISTINCT session_id FROM conversation_history) T1
+                    FROM SessionMaxID T1
                     LEFT JOIN memory_processing_state T2 ON T1.session_id = T2.session_id
-                    WHERE (SELECT MAX(id) FROM conversation_history WHERE session_id = T1.session_id) > COALESCE(T2.last_processed_id, 0)
+                    WHERE T1.max_id > COALESCE(T2.last_processed_id, 0)
+                    ORDER BY T1.session_id
                     LIMIT ?
                 """, (num_sessions,))
+                
                 sessions = cursor.fetchall()
 
                 if not sessions: return []
@@ -217,30 +225,28 @@ class MemoryBuilder:
                 total_moved = 0
                 for chunk in chunks:
                     session_id = chunk['session_id']
+                    start_id = chunk['start_message_id']
                     end_id = chunk['end_message_id']
                     
                     cursor.execute(
                         """
-                        INSERT INTO archived_conversations (id, timestamp, session_id, role, content, agent_used)
+                        INSERT OR IGNORE INTO archived_conversations (id, timestamp, session_id, role, content, agent_used)
                         SELECT id, timestamp, session_id, role, content, agent_used
                         FROM conversation_history
-                        WHERE session_id = ? AND id <= ?
+                        WHERE session_id = ? AND id BETWEEN ? AND ?
                         """,
-                        (session_id, end_id)
+                        (session_id, start_id, end_id)
                     )
                     
                     cursor.execute(
-                        "DELETE FROM conversation_history WHERE session_id = ? AND id <= ?",
-                        (session_id, end_id)
+                        "DELETE FROM conversation_history WHERE session_id = ? AND id BETWEEN ? AND ?",
+                        (session_id, start_id, end_id)
                     )
+                    
                     total_moved += cursor.rowcount
                 
                 conn.commit()
                 print(f"  - ✅ Archived and cleaned up {total_moved} old messages.")
-                
-                print("  - Running VACUUM to reclaim disk space...")
-                conn.execute("VACUUM")
-                
         except Exception as e:
             print(f"  - ❌ Could not archive processed conversations: {e}")
 
@@ -251,22 +257,39 @@ if __name__ == "__main__":
     print("="*60)
 
     builder = MemoryBuilder()
+    
+    all_new_memories = []
+    all_processed_chunks_for_archiving = []
+    
     while True:
-        print("\n" + "-"*20 + " Starting a new processing run " + "-"*20)
+        print("\n" + "-"*20 + " Searching for new conversation chunks " + "-"*20)
         
         unprocessed_chunks = builder.get_unprocessed_conversation_chunks(num_sessions=10, chunk_size=20)
         if not unprocessed_chunks:
-            print("\n🎉 All sessions are fully processed and up-to-date!")
+            print("\n✅ No more unprocessed chunks found.")
             break
         
         new_memories = builder.extract_memories_from_chunks(unprocessed_chunks)
-        builder.save_memories_to_db(new_memories)
-        builder.build_and_save_index(new_memories)
         builder.update_processing_state(unprocessed_chunks)
-        builder.archive_processed_conversations(unprocessed_chunks)
-        
-        print("...More messages might exist, starting next run in 1 second...")
+
+        if new_memories:
+            all_new_memories.extend(new_memories)
+            all_processed_chunks_for_archiving.extend(unprocessed_chunks)
+            print(f"  - Staged {len(new_memories)} new memories for batch processing.")
+
+        print("...Searching for more messages...")
         time.sleep(1)
+
+    if all_new_memories:
+        print("\n" + "="*60)
+        print(f"--- 🏛️  Committing {len(all_new_memories)} new memories to storage (Batch Operation)  🏛️ ---")
+        print("="*60)
+        
+        builder.save_memories_to_db(all_new_memories)
+        builder.build_and_save_index(all_new_memories)
+        builder.archive_processed_conversations(all_processed_chunks_for_archiving)
+    else:
+        print("\n🎉 All sessions are fully processed and up-to-date!")
 
     print("\n" + "="*60)
     print("--- 🏛️  Memory Consolidation Process Finished  🏛️ ---")
