@@ -66,10 +66,7 @@ class Dispatcher:
                         "detail": f"วิเคราะห์เจตนาเป็น '{intent}' เรียบร้อย"
                     }
                 })
-
             corrected_query = dispatch_order.get("corrected_query", query)
-            corrected_query = dispatch_order.get("corrected_query", query)
-
             intent_to_agent_map = {
                 "PLANNER_REQUEST": "PLANNER",
                 "GENERAL_CONVERSATION": "GENERAL_HANDLER",
@@ -83,6 +80,7 @@ class Dispatcher:
                 "USER_STORYTELLING": "LISTENER",
                 "TIME_REQUEST": "REPORTER",
                 "DATE_REQUEST": "REPORTER",
+                "MEMORY_QUERY": "MEMORY_QUERY", 
             }
             
             agents_needing_memory = {
@@ -124,12 +122,12 @@ class Dispatcher:
                 elif agent_name == "IMAGE":
                     image_info = agent.handle(corrected_query)
                     if image_info:
-                        answer = "นี่คือรูปภาพที่ผมหามาให้ครับ"
+                        answer = "นี่คือรูปภาพที่ฉันหามาให้ค่ะ"
                         return await self._finalize_response("IMAGE", answer, user_id, image_info=image_info, update_callback=update_callback)
                     print(f"⚠️ Dispatcher: ImageAgent found no image. Defaulting to Planner.")
                     return await self._run_deep_analysis(corrected_query, user_id, update_callback=update_callback)
 
-                else: # Utility agents
+                else:
                     answer = agent.handle(corrected_query)
                     if answer is not None:
                         return await self._finalize_response(agent_name, answer, user_id, update_callback=update_callback)
@@ -138,7 +136,7 @@ class Dispatcher:
 
             print(f"⚠️ Dispatcher: Unknown or unhandled intent '{intent}'. Defaulting to Planner.")
             return await self._run_deep_analysis(corrected_query, user_id, update_callback=update_callback)
-
+        
         except Exception as e:
             print(f"❌ Unhandled error in Dispatcher handle_query: {e}")
             traceback.print_exc()
@@ -153,9 +151,6 @@ class Dispatcher:
             return await self._finalize_response("DISPATCHER_ERROR", "ขออภัยครับ เกิดข้อผิดพลาดร้ายแรงในระบบจัดการ", user_id, is_error=True, update_callback=update_callback)
 
     async def _run_deep_analysis(self, query: str, user_id: str, update_callback: Optional[Callable] = None) -> FinalResponse:
-        """
-        ฟังก์ชันย่อยสำหรับรันกระบวนการวิเคราะห์เชิงลึกทั้งหมด
-        """
         print(f"🧠 Dispatcher: Initiating deep analysis for query: '{query}'")
         
         if update_callback:
@@ -185,12 +180,9 @@ class Dispatcher:
                                  image_info: Optional[Dict] = None, is_error: bool = False,
                                  thought_process: Optional[Dict] = None, 
                                  update_callback: Optional[Callable] = None) -> FinalResponse:
-        """
-        ฟังก์ชันย่อยสำหรับขั้นตอนสุดท้าย: การจัดรูปแบบและบันทึกความทรงจำ
-        """
         final_answer = answer or ""
         
-        agents_that_need_formatting = {"PLANNER", "NEWS", "PROACTIVE_OFFER", "GENERAL_HANDLER", "LISTENER"}
+        agents_that_need_formatting = {"PLANNER", "NEWS", "PROACTIVE_OFFER", "GENERAL_HANDLER", "LISTENER", "MEMORY_QUERY"}
         if agent_used in agents_that_need_formatting and not is_error and answer:
              formatter = self.agents.get("FORMATTER")
              if formatter:

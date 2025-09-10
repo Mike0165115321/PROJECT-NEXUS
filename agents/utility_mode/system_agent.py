@@ -1,5 +1,5 @@
 # agents/utility_mode/system_agent.py
-# (V3 - Linux Specialist)
+# (V3.1 - Environment-Aware)
 
 import pyperclip
 import os
@@ -12,10 +12,14 @@ from typing import Optional
 class SystemAgent:
     """
     Agent ที่จัดการการทำงานกับระบบปฏิบัติการ (ปรับจูนสำหรับ Linux/WSL)
+    (V3.1: เพิ่มการตรวจสอบสภาพแวดล้อม WSL เพื่อจัดการฟีเจอร์ที่เข้ากันไม่ได้)
     """
     def __init__(self):
         self.current_os = platform.system().lower()
-        print(f"⚙️  System Agent (V3 - Linux Specialist) is operational on {self.current_os}.")
+        self.is_wsl = 'microsoft' in platform.uname().release.lower()
+        
+        env_string = "WSL" if self.is_wsl else self.current_os
+        print(f"⚙️  System Agent (V3.1 - Environment-Aware) is operational on {env_string}.")
 
     def _read_clipboard(self) -> str:
         try:
@@ -35,33 +39,23 @@ class SystemAgent:
         app_name_lower = app_name.lower().strip()
         
         thai_to_eng_app = {
-            'เครื่องคิดเลข': 'calculator', 
-            'เท็กซ์เอดิเตอร์': 'text_editor',
-            'โน๊ต': 'text_editor',
-            'โครม': 'chrome',
-            'เบราว์เซอร์': 'browser',
-            'วีเอสโค้ด': 'vscode',
-            'สปอติฟาย': 'spotify',
-            'เทอร์มินัล': 'terminal',
+            'เครื่องคิดเลข': 'calculator', 'เท็กซ์เอดิเตอร์': 'text_editor',
+            'โน๊ต': 'text_editor', 'โครม': 'chrome', 'เบราว์เซอร์': 'browser',
+            'วีเอสโค้ด': 'vscode', 'สปอติฟาย': 'spotify', 'เทอร์มินัล': 'terminal',
             'ไฟล์': 'file_manager'
         }
         
         app_map = {
-            'text_editor': 'gedit',
-            'calculator': 'gnome-calculator',
-            'browser': 'google-chrome-stable',
-            'chrome': 'google-chrome-stable',
-            'vscode': 'code',
-            'spotify': 'spotify',
-            'terminal': 'gnome-terminal',
-            'file_manager': 'nautilus'
+            'text_editor': 'gedit', 'calculator': 'gnome-calculator',
+            'browser': 'google-chrome-stable', 'chrome': 'google-chrome-stable',
+            'vscode': 'code', 'spotify': 'spotify',
+            'terminal': 'gnome-terminal', 'file_manager': 'nautilus'
         }
         
         app_key = thai_to_eng_app.get(app_name_lower, app_name_lower)
         command = app_map.get(app_key)
-        is_wsl = 'microsoft' in platform.uname().release.lower()
         
-        if app_key == 'file_manager' and is_wsl:
+        if app_key == 'file_manager' and self.is_wsl:
             command = 'explorer.exe .'
             print("  - [System Agent] WSL detected. Using 'explorer.exe .' for file manager.")
         
@@ -89,7 +83,11 @@ class SystemAgent:
         except Exception as e:
             return f"ขออภัยครับ เกิดข้อผิดพลาดขณะพยายามเปิด {site_name}: {e}"
 
+
     def _set_system_volume(self, level: int) -> str:
+        if self.is_wsl:
+            return "ขออภัยครับ ผมไม่สามารถควบคุมระดับเสียงของระบบได้โดยตรงจากสภาพแวดล้อม WSL ครับ"
+            
         if not 0 <= level <= 100: return "โปรดระบุระดับเสียงระหว่าง 0 ถึง 100 ครับ"
         try:
             subprocess.run(['amixer', '-D', 'pulse', 'sset', 'Master', f'{level}%'], check=True)
@@ -100,6 +98,9 @@ class SystemAgent:
             return f"ขออภัยครับ เกิดข้อผิดพลาดขณะพยายามปรับระดับเสียง: {e}"
 
     def _get_current_volume(self) -> Optional[int]:
+        if self.is_wsl:
+            return None 
+
         try:
             result = subprocess.run(['amixer', '-D', 'pulse', 'sget', 'Master'], capture_output=True, text=True, check=True)
             match = re.search(r"\[(\d{1,3})%\]", result.stdout)
@@ -110,16 +111,13 @@ class SystemAgent:
 
     def _change_volume(self, direction: str, amount: int = 10) -> str:
         current_level = self._get_current_volume()
-        if current_level is None: return "ขออภัยครับ ผมไม่สามารถตรวจสอบระดับเสียงปัจจุบันได้"
+        if current_level is None:
+            return "ขออภัยครับ ผมไม่สามารถควบคุมระดับเสียงของระบบได้ในสภาพแวดล้อมปัจจุบันครับ"
         
         new_level = min(current_level + amount, 100) if direction == "increase" else max(current_level - amount, 0)
         return self._set_system_volume(new_level)
 
     def handle(self, query: str) -> Optional[str]:
-        """
-        ตรวจสอบ query กับชุดกฎ (Rules) ที่กำหนดไว้
-        ถ้าตรงเงื่อนไข จะเรียกใช้ฟังก์ชันที่เกี่ยวข้องและคืนค่าผลลัพธ์
-        """
         q_lower = query.lower().strip()
 
         set_volume_match = re.search(r"(ปรับ|ตั้งค่า)\s*เสียง\s*(?:เป็น|ไปที่)?\s*(\d{1,3})", q_lower)
@@ -148,5 +146,5 @@ class SystemAgent:
             return self._write_to_clipboard(write_clip_match.group(2))
         if any(keyword in q_lower for keyword in ["อ่านคลิปบอร์ด", "ในคลิปบอร์ดมีอะไร"]):
             return self._read_clipboard()
-
+        
         return None

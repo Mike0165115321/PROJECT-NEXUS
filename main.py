@@ -41,9 +41,9 @@ from agents.storytelling_mode.listener_agent import ListenerAgent
 from agents.apology_agent.apology_agent import ApologyAgent
 from agents.feng_mode.general_conversation_agent import GeneralConversationAgent
 from agents.feng_mode.proactive_offer_agent import ProactiveOfferAgent
+from agents.memory_mode.memory_agent import MemoryAgent
 from agents.persona_core import FENG_PERSONA_PROMPT
 
-# --- ⭐️ แก้ไขจุดที่ 1: ย้ายการประกาศตัวแปรมาไว้ด้านบน ⭐️ ---
 web_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 
 AGENTS = {}
@@ -70,8 +70,8 @@ async def create_audio_file_background(text: str, output_path: str, task_id: str
 async def cleanup_old_audio_files():
     """Service ที่ทำงานเบื้องหลังเพื่อลบไฟล์เสียงเก่า"""
     audio_dir = os.path.join(web_dir, "static", "audio")
-    cleanup_interval_seconds = 300  # 5 นาที
-    max_file_age_minutes = 5        # อายุไฟล์สูงสุด 5 นาที
+    cleanup_interval_seconds = 300  
+    max_file_age_minutes = 5       
     
     while True:
         await asyncio.sleep(cleanup_interval_seconds)
@@ -125,13 +125,19 @@ async def lifespan(app: FastAPI):
             "IMAGE": ImageAgent(
                 unsplash_key=settings.UNSPLASH_ACCESS_KEY,
                 key_manager=groq_key_manager,
-                model_name=settings.DEFAULT_UTILITY_MODEL
+                model_name=settings.IMAGE_AGENT_MODEL 
             ),
             "TTS": tts_engine_instance,
             "APOLOGY": ApologyAgent(
                 key_manager=groq_key_manager,
                 model_name=settings.APOLOGY_AGENT_MODEL,
                 persona_prompt=FENG_PERSONA_PROMPT
+            ),
+            "MEMORY_QUERY": MemoryAgent(
+                key_manager=groq_key_manager, 
+                model_name=settings.MEMORY_AGENT_MODEL, 
+                memory_manager=memory_manager_instance, 
+                persona_prompt=FENG_PERSONA_PROMPT   
             ),
             "FENG": FengAgent(
                 key_manager=google_key_manager,

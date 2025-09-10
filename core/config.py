@@ -14,34 +14,38 @@ class Settings:
     
     UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
     PRIMARY_GEMINI_MODEL = "gemini-1.5-flash-latest"
-    
-    PRIMARY_GROQ_MODEL = "llama3-70b-8192"
-    SECONDARY_GROQ_MODEL = "llama3-8b-8192"
+    PRIMARY_GROQ_MODEL = "llama-3.3-70b-versatile"
+    SECONDARY_GROQ_MODEL = "llama-3.1-8b-instant"
+
+    IMAGE_AGENT_MODEL = os.getenv("IMAGE_AGENT_MODEL", PRIMARY_GROQ_MODEL)
 
     KNOWLEDGE_EXTRACTOR_MODEL = os.getenv("KNOWLEDGE_EXTRACTOR_MODEL", PRIMARY_GEMINI_MODEL)
 
     PLANNER_AGENT_MODEL = os.getenv("PLANNER_AGENT_MODEL", PRIMARY_GEMINI_MODEL)
+
     FORMATTER_AGENT_MODEL = os.getenv("FORMATTER_AGENT_MODEL", PRIMARY_GEMINI_MODEL)
+
     COUNSELOR_AGENT_MODEL = os.getenv("COUNSELOR_AGENT_MODEL", PRIMARY_GEMINI_MODEL)
 
     FENG_PRIMARY_MODEL = os.getenv("FENG_PRIMARY_MODEL", PRIMARY_GROQ_MODEL)
-    
-    # โมเดลสำหรับ "เฟิง" (วิเคราะห์เจตนา)
-    # ⭐️ [CRITICAL FIX] ยังคงใช้ 70B เพื่อแก้ปัญหา Triage failed อย่างถาวร
+
     FENG_SECONDARY_MODEL = os.getenv("FENG_SECONDARY_MODEL", PRIMARY_GROQ_MODEL)
 
-    # โมเดลสำหรับ "นักข่าว"
     NEWS_AGENT_MODEL = os.getenv("NEWS_AGENT_MODEL", PRIMARY_GEMINI_MODEL)
 
-    # >> ⚙️ Utility Agents: สำหรับงานเบื้องหลังที่ไม่ซับซ้อน
-    # เราเลือก Groq 8B เพื่อความเร็วและประหยัด
     DEFAULT_UTILITY_MODEL = SECONDARY_GROQ_MODEL
-    
+
     CODE_AGENT_MODEL = os.getenv("CODE_AGENT_MODEL", DEFAULT_UTILITY_MODEL)
+
     LIBRARIAN_AGENT_MODEL = os.getenv("LIBRARIAN_AGENT_MODEL", DEFAULT_UTILITY_MODEL)
+
     LTM_MODEL = os.getenv("LTM_MODEL", DEFAULT_UTILITY_MODEL)
+
     LISTENER_AGENT_MODEL = os.getenv("LISTENER_AGENT_MODEL", DEFAULT_UTILITY_MODEL)
+
     APOLOGY_AGENT_MODEL = os.getenv("APOLOGY_AGENT_MODEL", DEFAULT_UTILITY_MODEL)
+
+    MEMORY_AGENT_MODEL = os.getenv("MEMORY_AGENT_MODEL", PRIMARY_GROQ_MODEL)
 
     NEWS_KEY = os.getenv("NEWS_API_KEY")
 

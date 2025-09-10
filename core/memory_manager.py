@@ -17,9 +17,6 @@ class MemoryManager:
         self.pending_tasks: Dict[str, Any] = {}
 
     def _init_db(self):
-        """
-        [FINAL VERSION] สร้างและอัปเดต Schema ของฐานข้อมูลด้วยวิธีที่แข็งแกร่งที่สุด
-        """
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -88,17 +85,14 @@ class MemoryManager:
             del self.pending_tasks[session_id]
             return None
 
-        # [ROBUSTNESS] ทำให้การตรวจสอบการยืนยัน/ปฏิเสธฉลาดขึ้น
         cleaned_input = user_confirmation.lower().strip()
         
-        # ตรวจสอบคำปฏิเสธก่อน
         denial_keywords = ["ไม่", "ปฏิเสธ", "อย่า", "หยุด", "พอแล้ว"]
         if any(keyword in cleaned_input for keyword in denial_keywords):
              print(f"❌ [Memory] User '{session_id}' denied deep dive. Clearing pending task.")
              del self.pending_tasks[session_id]
              return None
 
-        # ตรวจสอบคำยืนยัน (ใช้ Regex เพื่อหาคำที่สมบูรณ์)
         confirmation_pattern = r'\b(ใช่|ครับ|ค่ะ|เอาเลย|จัดมา|เจาะลึก|ตกลง|แน่นอน|ได้เลย|ต้องการ)\b'
         if re.search(confirmation_pattern, cleaned_input):
             original_query = pending["original_query"]
@@ -106,7 +100,6 @@ class MemoryManager:
             del self.pending_tasks[session_id]
             return original_query
 
-        # ถ้าไม่เข้าเงื่อนไขไหนเลย ถือว่าไม่ยืนยัน
         print(f"❔ [Memory] User '{session_id}' gave an unclear response. Clearing pending task.")
         del self.pending_tasks[session_id]
         return None
@@ -125,3 +118,68 @@ class MemoryManager:
         except Exception as e:
             print(f"❌ Could not retrieve last user query: {e}")
             return "(เกิดข้อผิดพลาดในการดึงคำถามล่าสุด)"
+    def get_first_user_memory(self, session_id: str = "default_user") -> Optional[Dict]:
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT content, timestamp FROM conversation_history WHERE session_id = ? AND role = 'user' ORDER BY id ASC LIMIT 1",
+                    (session_id,)
+                )
+                row = cursor.fetchone()
+                return dict(row) if row else None
+        except Exception as e:
+            print(f"❌ Could not retrieve first user memory: {e}")
+            return None
+
+    def get_conversation_stats(self, session_id: str = "default_user") -> Dict:
+        """ดึงข้อมูลสถิติภาพรวมของการสนทนา"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM conversation_history WHERE session_id = ?", (session_id,))
+                total_messages = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*) FROM conversation_history WHERE session_id = ? AND role = 'user'", (session_id,))
+                user_messages = cursor.fetchone()[0]
+                cursor.execute("SELECT MIN(timestamp) FROM conversation_history WHERE session_id = ?", (session_id,))
+                first_message_time = cursor.fetchone()[0]
+                
+                return {
+                    "total_messages": total_messages,
+                    "user_messages": user_messages,
+                    "model_messages": total_messages - user_messages,
+                    "first_message_time": first_message_time
+                }
+        except Exception as e:
+            print(f"❌ Could not retrieve conversation stats: {e}")
+            return {"error": str(e)}
+
+    def get_last_session_summary(self, session_id: str = "default_user", hours_ago: int = 24) -> List[Dict]:
+        """ดึงบทสรุป (title) ของ Long Term Memory ที่ถูกสร้างขึ้นในช่วง X ชั่วโมงที่ผ่านมา"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                time_threshold = datetime.datetime.now() - datetime.timedelta(hours=hours_ago)
+                
+                cursor.execute(
+                    """SELECT title, summary FROM long_term_memories 
+                       WHERE session_id = ? AND created_at >= ? 
+                       ORDER BY created_at DESC""",
+                    (session_id, time_threshold)
+                )
+                rows = cursor.fetchall()
+                return [dict(row) for row in rows]
+        except Exception as e:
+            print(f"❌ Could not retrieve last session summary: {e}")
+            return []
+
+    def get_shown_image_ids(self, session_id: str = "default_user") -> List[str]:
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT image_id FROM shown_images WHERE session_id = ?", (session_id,))
+                return [row[0] for row in cursor.fetchall()]
+        except sqlite3.OperationalError:
+            return []
