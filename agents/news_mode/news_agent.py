@@ -1,16 +1,15 @@
 # agents/news_mode/news_agent.py
-# (V5.1 - Corrected Prompt) - (ใช้ Gemini API เท่านั้น)
-
-# ลบ import ของ Groq ออก และใช้ import ของ Gemini แทน
 import google.generativeai as genai
 import traceback
 from typing import Dict, Any
+import asyncio
 
 class NewsAgent:
     def __init__(self, key_manager, model_name: str, rag_engine, persona_prompt: str):
         self.key_manager = key_manager
         self.rag_engine = rag_engine
         self.model_name = model_name
+        self.model = genai.GenerativeModel(self.model_name)
         
         self.summary_prompt_template = persona_prompt + """
 **MANDATE (อำนาจหน้าที่): บรรณาธิการข่าวกรองอาวุโส**
@@ -58,14 +57,38 @@ class NewsAgent:
 
         print(f"📰 บรรณาธิการข่าวกรอง (NewsAgent V5.1 - Gemini Engine) ประจำสถานี")
 
-    def handle(self, query: str) -> Dict[str, Any]:
-        print(f"📰 [News Agent] Handling news query: '{query}' with model '{self.model_name}'")
-        
-        thought_process = { "agent_name": "NewsAgent", "query": query, "steps": [] }
-
+    async def _call_llm_async(self, prompt: str) -> str:
+        api_key = await self.key_manager.get_key()
+        if not api_key: raise Exception("No available API keys.")
         try:
-            thought_process["steps"].append(f"Searching News RAG Index for: '{query}'")
-            context_from_rag = self.rag_engine.search_news(query, top_k=7)
+            genai.configure(api_key=api_key)
+            safety_settings = [
+                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+            ]
+            response = await self.model.generate_content_async(prompt, safety_settings=safety_settings)
+            return response.text.strip()
+        
+        except Exception as e:
+            error_str = str(e).lower()
+            if "429" in error_str or "resource_exhausted" in error_str:
+                print(f"🟡 News Agent: Key '...{api_key[-4:]}' hit rate limit.")
+                self.key_manager.report_failure(api_key)
+                print(" 	 -> Retrying with the next available key...")
+                await asyncio.sleep(1) 
+                return await self._call_llm_async(prompt) 
+            raise e
+
+    async def handle(self, query: str) -> Dict[str, Any]:
+        print(f"📰 [News Agent V11] Handling news query: '{query}' with model '{self.model_name}' (Async)")
+        thought_process = { "agent_name": "NewsAgent", "query": query, "steps": [] }
+        try:
+            thought_process["steps"].append(f"Searching News RAG Index (Async) for: '{query}'")
+            
+            context_from_rag = await self.rag_engine.search_news(query, top_k=7)
+            
             thought_process["retrieved_context"] = context_from_rag
             
             if not context_from_rag or "ไม่พบ" in context_from_rag:
@@ -74,43 +97,24 @@ class NewsAgent:
                     "answer": "ขออภัยครับ ผมไม่พบข้อมูลข่าวสารที่เกี่ยวข้องในขณะนี้",
                     "thought_process": thought_process
                 }
-
-            thought_process["steps"].append(f"Found news context. Summarizing with Gemini model: {self.model_name}...")
-            
-            api_key = self.key_manager.get_key()
-            if not api_key:
-                raise Exception("No available API keys for NewsAgent.")
-
+            thought_process["steps"].append(f"Found news context. Summarizing with Gemini (Async)...")
             query_topic = query if query else "ไม่มีหัวข้อเฉพาะ"
+
             prompt = self.summary_prompt_template.format(
                 context_from_rag=context_from_rag,
                 query_topic=query_topic
             )
-            
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel(self.model_name)
-            
-            safety_settings = [
-                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-            ]
-
-            response = model.generate_content(prompt, safety_settings=safety_settings)
-            final_answer = response.text.strip()
-
+            final_answer = await self._call_llm_async(prompt)
             thought_process["steps"].append("Successfully generated news briefing from RAG context using Gemini.")
             return { "answer": final_answer, "thought_process": thought_process }
-            
+        
         except Exception as e:
             print(f"❌ NewsAgent Error: {e}")
             traceback.print_exc()
-            
             error_message = str(e)
+
             thought_process["error"] = error_message
             answer = "ขออภัยครับ เกิดข้อผิดพลาดระหว่างการสรุปข่าว"
-
             if "AllKeysOnCooldownError" in e.__class__.__name__:
                  answer = "ขออภัยครับ โควต้า API สำหรับสรุปข่าวเต็มชั่วคราว กรุณาลองใหม่อีกครั้งในภายหลัง"
             

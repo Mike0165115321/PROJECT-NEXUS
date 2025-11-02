@@ -1,17 +1,18 @@
 # agents/apology_agent/apology_agent.py
-# (V1 - The Graceful Error Handler)
+# (V46.0 - Async & CORRECTED Groq Fix)
 
 from typing import Dict, Any
-from groq import Groq
+from groq import AsyncGroq 
+import asyncio
 
 class ApologyAgent:
     """
-    Agent ที่ทำหน้าที่เป็น "ผู้จัดการสถานการณ์" (Situation Manager)
-    สร้างคำขอโทษและเสนอทางแก้ไขเมื่อ Agent อื่นทำงานผิดพลาด
+    [V46] Agent ที่ทำหน้าที่เป็น "ผู้จัดการสถานการณ์" (แบบ Async ที่ถูกต้อง)
     """
     def __init__(self, key_manager, model_name: str, persona_prompt: str):
         self.key_manager = key_manager
         self.model_name = model_name
+        
         self.apology_prompt_template = persona_prompt + """
 **ภารกิจ: ผู้จัดการสถานการณ์และฟื้นฟูความสัมพันธ์ (Situation & Rapport Manager)**
 
@@ -36,30 +37,46 @@ class ApologyAgent:
 
 **คำขอโทษและข้อเสนอแนะ (โดย เฟิง):**
 """
-        print("🛡️ Apology Agent (V1 - Graceful Handler) is on standby.")
+        print("🛡️ Apology Agent (V46 - Async Handler) is on standby.") 
 
-    def handle(self, original_query: str, error_context: str) -> str:
-        """
-        เมธอดหลักที่ Dispatcher จะเรียกใช้เมื่อเกิด Error
-        """
-        print(f"🛡️ [Apology Agent] Handling error for query: '{original_query}'")
-        api_key = self.key_manager.get_key()
-        if not api_key:
-            return "ผมต้องขออภัยอย่างสูงครับ เกิดข้อผิดพลาดซ้ำซ้อนในระบบ"
-
+    async def _call_llm_async(self, prompt: str) -> str:
+        
+        api_key = await self.key_manager.get_key() 
+        if not api_key: raise Exception("No available Groq API keys.")
+        
         try:
-            client = Groq(api_key=api_key)
+            client = AsyncGroq(api_key=api_key)
             
+            chat_completion = await client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model=self.model_name,
+            )
+            return chat_completion.choices[0].message.content.strip()
+        
+        except Exception as e:
+            print(f"❌ ApologyAgent LLM Error: {e}")
+            if api_key: self.key_manager.report_failure(api_key) 
+            
+            if api_key and ("429" in str(e).lower() or "service_unavailable" in str(e).lower()):
+                print(" 	 -> Retrying _call_llm_async...")
+                await asyncio.sleep(1)
+                return await self._call_llm_async(prompt) 
+            
+            raise e 
+    async def handle(self, original_query: str, error_context: str) -> str:
+        """
+        [V20] เมธอดหลักที่ Dispatcher จะเรียกใช้เมื่อเกิด Error (แบบ Async)
+        """
+        print(f"🛡️ [Apology Agent V46] Handling error for query: '{original_query}' (Async)") 
+        
+        try:
             prompt = self.apology_prompt_template.format(
                 original_query=original_query,
                 error_context=error_context
             )
             
-            chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=self.model_name,
-            )
-            return chat_completion.choices[0].message.content.strip()
+            return await self._call_llm_async(prompt)
+            
         except Exception as e:
             print(f"❌ ApologyAgent's own LLM Error: {e}")
             return "ผมต้องขออภัยอย่างสูงครับ ดูเหมือนว่าระบบจะขัดข้องชั่วคราว โปรดลองใหม่อีกครั้งในภายหลัง"

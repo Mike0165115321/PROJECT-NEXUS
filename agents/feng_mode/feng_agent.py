@@ -8,6 +8,7 @@ from rapidfuzz import process, fuzz
 from typing import Optional, Dict, List, Any
 import google.generativeai as genai
 from core.api_key_manager import ApiKeyManager
+import asyncio
 
 class FengAgent:
     def __init__(self, key_manager: ApiKeyManager, model_name: str, persona_prompt: str):
@@ -145,14 +146,20 @@ class FengAgent:
 **คำถามดิบ:** "{query}"
 **ผลลัพธ์ JSON:**
 """
+        self.model = genai.GenerativeModel(self.model_name)
         print("👤 หน่วยคัดกรองด่านหน้า (FengAgent) [SURGICAL STRIKE] เข้าประจำตำแหน่ง")
 
-    def _get_quick_response(self, query: str) -> Optional[str]:
+    async def _get_quick_response(self, query: str) -> Optional[str]:
         q_lower = query.lower().strip()
-        for item in QUICK_RESPONSES:
-            if process.extractOne(q_lower, item["questions"], scorer=fuzz.ratio, score_cutoff=92):
-                return random.choice(item["answers"])
-        return None
+        
+        def _blocking_fuzz_check():
+            for item in QUICK_RESPONSES:
+                if process.extractOne(q_lower, item["questions"], scorer=fuzz.ratio, score_cutoff=92):
+                    return random.choice(item["answers"])
+            return None
+
+        answer = await asyncio.to_thread(_blocking_fuzz_check)
+        return answer
 
     def _extract_json(self, text: str) -> Optional[Dict]:
         match = re.search(r'```(json)?\s*(\{[\s\S]*?\})\s*```', text, re.DOTALL)
@@ -165,16 +172,15 @@ class FengAgent:
         except (json.JSONDecodeError, IndexError): pass
         return None
 
-    def _classify_intent_and_extract_keywords(self, query: str) -> Dict[str, Any]:
-        print(f"🤔 [Feng Triage] Analyzing and extracting from query with '{self.model_name}'...")
-        api_key = self.key_manager.get_key()
+    async def _classify_intent_and_extract_keywords(self, query: str) -> Dict[str, Any]:
+        print(f"🤔 [Feng Triage] Analyzing and extracting from query with '{self.model_name}' (Async)...")
+        api_key = await self.key_manager.get_key()
         fallback_response = {"corrected_query": query, "intent": "DEEP_ANALYSIS_REQUEST", "keywords": query.split()}
         if not api_key: return fallback_response
 
         raw_response = ""
         try:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel(self.model_name)
             prompt = self.intent_analysis_prompt.format(query=query)
             
             safety_settings = [
@@ -184,28 +190,36 @@ class FengAgent:
                 {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
             ]
             
-            response = model.generate_content(prompt, safety_settings=safety_settings)
+            response = await self.model.generate_content_async(prompt, safety_settings=safety_settings)
+            
             raw_response = response.text
             json_response = self._extract_json(raw_response)
             
             if json_response and "corrected_query" in json_response and "intent" in json_response and "keywords" in json_response:
-                 print(f"  -> Triage successful. Intent: {json_response.get('intent')}, Keywords: {json_response.get('keywords')}")
-                 return json_response
+                print(f" 	-> Triage successful. Intent: {json_response.get('intent')}, Keywords: {json_response.get('keywords')}")
+                return json_response
             else:
                 raise ValueError("Could not parse a valid JSON with all required keys.")
 
         except Exception as e:
-            print(f"  -> Triage failed: {e}")
-            print(f"  -> RAW FAILED RESPONSE FROM GEMINI: '{raw_response}'")
+            print(f" 	-> Triage failed: {e}")
+            print(f" 	-> RAW FAILED RESPONSE FROM GEMINI: '{raw_response}'")
             if api_key: self.key_manager.report_failure(api_key)
+            
+            if api_key and ("429" in str(e) or "resource_exhausted" in str(e).lower()):
+                print(" 	-> Retrying with a new key...")
+                await asyncio.sleep(1) 
+                return await self._classify_intent_and_extract_keywords(query)
+
             return fallback_response
 
-    def handle(self, query: str, short_term_memory: List[Dict[str, Any]]) -> Dict[str, Any]:
-        quick_answer = self._get_quick_response(query)
+    async def handle(self, query: str, short_term_memory: List[Dict[str, Any]]) -> Dict[str, Any]:
+    
+        quick_answer = await self._get_quick_response(query)
         if quick_answer:
             return {"type": "final_answer", "content": quick_answer}
 
-        analysis_result = self._classify_intent_and_extract_keywords(query)
+        analysis_result = await self._classify_intent_and_extract_keywords(query)
         
         print(f"🛡️ [Feng Triage] Passing complete dispatch order to Dispatcher.")
         return {

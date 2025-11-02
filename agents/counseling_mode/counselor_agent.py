@@ -1,17 +1,14 @@
 # agents/counseling_mode/counselor_agent.py
-# (V1 - Empathic Listening First)
 
 from typing import Dict, List, Any
 import google.generativeai as genai 
+import asyncio
 
 class CounselorAgent:
-    """
-    Agent ที่ทำหน้าที่เป็น "สหายผู้เข้าอกเข้าใจ" (Empathic Companion)
-    สร้างพื้นที่ปลอดภัยและช่วยผู้ใช้ไตร่ตรองความรู้สึกของตนเอง
-    """
     def __init__(self, key_manager, model_name: str, persona_prompt: str):
         self.key_manager = key_manager
         self.model_name = model_name
+        self.model = genai.GenerativeModel(self.model_name)
         self.counseling_prompt_template = persona_prompt + """
 **ภารกิจ: สหายผู้เข้าอกเข้าใจ (The Empathic Companion)**
 
@@ -31,36 +28,42 @@ class CounselorAgent:
 {history_context}
 
 **Input ล่าสุดจากผู้ใช้:** "{query}"
-**คำตอบของเฟิง (ในฐานะผู้รับฟัง):**
+**คำตอบของฟางซิน (ในฐานะผู้รับฟัง):**
 """
         print("❤️  ทีมสนทนาและให้คำปรึกษา (CounselorAgent) รายงานตัวพร้อมปฏิบัติภารกิจ")
 
-    def handle(self, query: str, short_term_memory: List[Dict[str, Any]]) -> str:
-        """
-        เมธอดหลักที่ Dispatcher จะเรียกใช้
-        ทำหน้าที่สร้างคำตอบที่แสดงความเข้าอกเข้าใจ
-        """
-        print(f"❤️  [Counselor Agent] Handling sensitive query: '{query[:40]}...'")
+    async def _call_llm_async(self, prompt: str) -> str:
+        api_key = await self.key_manager.get_key()
+        if not api_key: raise Exception("No available API keys.")
+        try:
+            genai.configure(api_key=api_key)
+            response = await self.model.generate_content_async(prompt) 
+            return response.text.strip()
+        
+        except Exception as e:
+            error_str = str(e).lower()
+            if "429" in error_str or "resource_exhausted" in error_str:
+                print(f"🟡 Counselor Agent: Key '...{api_key[-4:]}' hit rate limit.")
+                self.key_manager.report_failure(api_key)
+                print(" 	 -> Retrying with the next available key...")
+                await asyncio.sleep(1) 
+                return await self._call_llm_async(prompt) 
+            raise e
+
+    async def handle(self, query: str, short_term_memory: List[Dict[str, Any]]) -> str:
+        print(f"❤️  [Counselor Agent V14] Handling sensitive query: '{query[:40]}...' (Async)")
         
         history_context = "\n".join([f"- {mem.get('role')}: {mem.get('content')}" for mem in short_term_memory])
         if not history_context:
             history_context = "(ยังไม่มีประวัติการสนทนา)"
 
-        api_key = self.key_manager.get_key()
-        if not api_key:
-            return "ขออภัยครับ ตอนนี้ผมอาจจะยังไม่พร้อมที่จะรับฟังเรื่องราวที่ละเอียดอ่อนเช่นนี้"
-
         try:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel(self.model_name)
-            
             prompt = self.counseling_prompt_template.format(
                 history_context=history_context,
                 query=query
             )
             
-            response = model.generate_content(prompt)
-            return response.text.strip()
+            return await self._call_llm_async(prompt)
             
         except Exception as e:
             print(f"❌ CounselorAgent LLM Error: {e}")

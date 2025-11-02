@@ -1,14 +1,14 @@
 # agents/storytelling_mode/listener_agent.py
-# (V1 - The Active Listener)
+# (V38.0 - Async & CORRECTED Groq Fix)
 
 from typing import Dict, List, Any
-from groq import Groq
+from groq import AsyncGroq  
 import random
+import asyncio  
 
 class ListenerAgent:
     """
-    Agent ที่ทำหน้าที่เป็น "ผู้รับฟังที่กระตือรือร้น" (Active Listener)
-    เมื่อผู้ใช้กำลังเล่าเรื่องราวต่อเนื่อง (USER_STORYTELLING)
+    [V38] Agent ที่ทำหน้าที่เป็น "ผู้รับฟังที่กระตือรือร้น" (แบบ Async ที่ถูกต้อง)
     """
     def __init__(self, key_manager, model_name: str, persona_prompt: str):
         self.key_manager = key_manager
@@ -40,37 +40,52 @@ class ListenerAgent:
 
 **คำตอบรับของเฟิง (ในฐานะผู้ฟัง):**
 """
-        print("👂 Listener Agent (V1 - Active Listener) is on duty.")
+        print("👂 Listener Agent (V38 - Async Active Listener) is on duty.")
 
-    def handle(self, query: str, short_term_memory: List[Dict[str, Any]]) -> str:
-        """
-        เมธอดหลักที่ Dispatcher จะเรียกใช้
-        """
-        print(f"👂 [Listener Agent] Actively listening to: '{query[:40]}...'")
+    async def _call_llm_async(self, prompt: str) -> str:
         
-        history_context = "\n".join([f"- {mem.get('role')}: {mem.get('content')}" for mem in short_term_memory])
-        if not history_context:
-            history_context = "(ยังไม่มีประวัติการสนทนา)"
-
-        api_key = self.key_manager.get_key()
-        if not api_key:
-            return random.choice(["ครับ", "อืม...", "ครับผม"])
-
+        api_key = await self.key_manager.get_key() 
+        if not api_key: raise Exception("No available Groq API keys.")
+        
         try:
-            client = Groq(api_key=api_key)
+            client = AsyncGroq(api_key=api_key)
             
-            prompt = self.listening_prompt_template.format(
-                history_context=history_context,
-                query=query
-            )
-            
-            chat_completion = client.chat.completions.create(
+            chat_completion = await client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model=self.model_name,
                 temperature=0.5
             )
             return chat_completion.choices[0].message.content.strip()
-            
+        
         except Exception as e:
             print(f"❌ ListenerAgent LLM Error: {e}")
-            return random.choice(["ครับ", "น่าสนใจครับ", "เล่าต่อได้เลยครับ"])
+            if api_key: self.key_manager.report_failure(api_key) 
+            
+            if api_key and ("429" in str(e).lower() or "service_unavailable" in str(e).lower()):
+                print(" 	 -> Retrying _call_llm_async...")
+                await asyncio.sleep(1)
+                return await self._call_llm_async(prompt) 
+            
+            raise e 
+
+    async def handle(self, query: str, short_term_memory: List[Dict[str, Any]]) -> str:
+        """
+        [V21] เมธอดหลักที่ Dispatcher จะเรียกใช้ (แบบ Async)
+        """
+        print(f"👂 [Listener Agent V38] Actively listening to: '{query[:40]}...' (Async)")
+        
+        history_context = "\n".join([f"- {mem.get('role')}: {mem.get('content')}" for mem in short_term_memory])
+        if not history_context:
+            history_context = "(ยังไม่มีประวัติการสนทนา)"
+
+        try:
+            prompt = self.listening_prompt_template.format(
+                history_context=history_context,
+                query=query
+            )
+            
+            return await self._call_llm_async(prompt)
+            
+        except Exception as e:
+            print(f"❌ ListenerAgent LLM failed, using random fallback: {e}")
+            return random.choice(["ครับ", "น่าสนใจครับ", "เล่าต่อได้เลยครับ", "อืม...", "ครับผม"])

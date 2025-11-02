@@ -132,8 +132,8 @@ intent: MEMORY_QUERY -> เรียก MemoryAgent (ใช้ Groq 70B)
 MemoryAgent จะไม่รับ short_term_memory แต่จะใช้ MemoryManager ที่เป็นเครื่องมือประจำตัวในการดึงข้อมูลเชิงลึกจากฐานข้อมูลโดยตรง จากนั้นจะทำการ คัดกรองภายใน (Internal Triage) ด้วย LLM อีกครั้งเพื่อเลือกฟังก์ชันที่เหมาะสมที่สุด
 intent: GENERAL_CONVERSATION -> เรียก GeneralConversationAgent (ใช้ Groq 70B + KG-RAG Engine)
 intent: DEEP_ANALYSIS_REQUEST -> เรียก ProactiveOfferAgent (ใช้ Groq 70B + KG-RAG Engine)
-intent: PLANNER_REQUEST -> เรียก PlannerAgent (ใช้ Gemini 1.5 Flash + Book RAG Engine)
-intent: COUNSELING_REQUEST -> เรียก CounselorAgent (ใช้ Gemini 1.5 Flash, ไม่ใช้ RAG)
+intent: PLANNER_REQUEST -> เรียก PlannerAgent (ใช้ Gemini 2.5 Flash + Book RAG Engine)
+intent: COUNSELING_REQUEST -> เรียก CounselorAgent (ใช้ Gemini 2.5 Flash, ไม่ใช้ RAG)
 intent: NEWS_REQUEST -> เรียก NewsAgent (ใช้ Groq 70B + News RAG Engine)
 intent: LIBRARIAN_REQUEST -> เรียก LibrarianAgent (ใช้ Groq 8B หรือ Rule-based + Book RAG Engine)
 intent: IMAGE_REQUEST -> เรียก ImageAgent (ใช้ Groq 70B + Unsplash API)
@@ -312,7 +312,7 @@ Database Systems:
 Neo4j: ฐานข้อมูลกราฟ (Graph Database) ที่ใช้เป็น "สมองส่วนความเข้าใจเชิงโครงสร้าง" (Knowledge Graph)
 SQLite: ฐานข้อมูลแบบไฟล์ ใช้เป็น "คลังข้อมูลดิบ" สำหรับความทรงจำทั้งระยะสั้น (conversation_history), ระยะยาว (long_term_memories), และส่วนที่จัดเก็บถาวร (archived_conversations)
 Cloud AI Services:
-Google AI Platform: ผู้ให้บริการโมเดล gemini-1.5-flash-latest
+Google AI Platform: ผู้ให้บริการโมเดล gemini-2.5-flash-latest
 GroqCloud: ผู้ให้บริการโมเดล llama-3.3-70b-versatile และ llama-3.1-8b-instant ผ่าน LPU Inference Engine
 Development Environment:
 Python 3.12+: ภาษาโปรแกรมหลัก

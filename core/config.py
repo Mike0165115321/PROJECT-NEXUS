@@ -13,7 +13,7 @@ class Settings:
     GROQ_API_KEYS = [key.strip() for key in os.getenv("GROQ_API_KEYS", "").split(',') if key.strip()]
     
     UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
-    PRIMARY_GEMINI_MODEL = "gemini-1.5-flash-latest"
+    PRIMARY_GEMINI_MODEL = "gemini-2.5-flash"
     PRIMARY_GROQ_MODEL = "llama-3.3-70b-versatile"
     SECONDARY_GROQ_MODEL = "llama-3.1-8b-instant"
 

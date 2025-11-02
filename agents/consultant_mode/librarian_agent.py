@@ -1,19 +1,19 @@
 # agents/consultant_mode/librarian_agent.py
-# (V3 - The Recommender Engine)
+# (V43.0 - Async & CORRECTED Groq Fix)
 
-from typing import Optional
-from groq import Groq 
+from typing import Optional, List, Dict, Any 
+from groq import AsyncGroq 
+import asyncio
 
 class LibrarianAgent:
     """
-    Agent ที่ทำหน้าที่เป็น "บรรณารักษ์ผู้แนะนำ" (Recommender Librarian)
-    สามารถให้ข้อมูล Meta ของคลังความรู้ และ "แนะนำ" หนังสือที่เกี่ยวข้องกับ
-    หัวข้อที่ผู้ใช้สนใจได้
+    [V43] Agent ที่ทำหน้าที่เป็น "บรรณารักษ์ผู้แนะนำ" (แบบ Async ที่ถูกต้อง)
     """
     def __init__(self, key_manager, model_name: str, rag_engine, persona_prompt: str):
-        self.key_manager = key_manager
+        self.key_manager = key_manager 
         self.model_name = model_name
         self.rag_engine = rag_engine
+        
         
         self.recommendation_prompt_template = persona_prompt + """
 **ภารกิจ: บรรณารักษ์ผู้แนะนำ (Recommender Librarian)**
@@ -39,14 +39,41 @@ class LibrarianAgent:
 
 **คำตอบ (โดย บรรณารักษ์เฟิง):**
 """
-        print("📚 Librarian Agent (V3 - Recommender) is on duty.")
+        print("📚 Librarian Agent (V43 - Async Recommender) is on duty.") 
 
-    def handle(self, query: str) -> str | None:
+    async def _call_llm_async(self, prompt: str) -> str:
+        
+        api_key = await self.key_manager.get_key()
+        if not api_key: raise Exception("No available Groq API keys.")
+        
+        try:
+            client = AsyncGroq(api_key=api_key)
+
+            chat_completion = await client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model=self.model_name,
+            )
+            return chat_completion.choices[0].message.content.strip()
+        
+        except Exception as e:
+            print(f"❌ LibrarianAgent LLM Error: {e}")
+            if api_key: self.key_manager.report_failure(api_key) 
+            
+            error_str = str(e).lower()
+            if api_key and ("429" in error_str or "service_unavailable" in error_str):
+                print(" 	 -> Retrying _call_llm_async...")
+                await asyncio.sleep(1)
+                return await self._call_llm_async(prompt) 
+            
+            raise e 
+        
+    async def handle(self, query: str) -> str | None:
         q_lower = query.lower().strip()
 
         if "มีหนังสืออะไรบ้าง" in q_lower or "รายชื่อหนังสือ" in q_lower:
-            print("📚 Librarian Agent: Handling 'list all books' request.")
-            all_titles = self.rag_engine.get_all_book_titles()
+            print("📚 Librarian Agent (Async V43): Handling 'list all books' request.")
+            all_titles = await self.rag_engine.get_all_book_titles() 
+            
             if not all_titles:
                 return "ขออภัยครับ ตอนนี้ยังไม่มีข้อมูลหนังสือในระบบครับ"
             
@@ -55,7 +82,7 @@ class LibrarianAgent:
             return header + body
 
         if "มีหมวดหมู่อะไรบ้าง" in q_lower or "มีประเภทอะไรบ้าง" in q_lower or "ชั้นหนังสือ" in q_lower:
-            print("📚 บรรณารักษ์ผู้แนะนำ (LibrarianAgent) ประจำเคาน์เตอร์")
+            print("📚 Librarian Agent (Async V43): Handling 'list categories' request.")
             all_categories = self.rag_engine.available_categories
             if not all_categories:
                 return "ขออภัยครับ ตอนนี้ยังไม่มีการจัดหมวดหมู่หนังสือในระบบครับ"
@@ -67,31 +94,22 @@ class LibrarianAgent:
 
         recommend_keywords = ["แนะนำหนังสือ", "ควรอ่านเล่มไหน", "เกี่ยวกับเรื่อง", "หนังสือเกี่ยวกับ"]
         if any(keyword in q_lower for keyword in recommend_keywords):
-            print(f"📚 Librarian Agent: Handling recommendation request for '{query}'")
+            print(f"📚 Librarian Agent (Async V43): Handling recommendation request for '{query}'")
             
-            all_titles = self.rag_engine.get_all_book_titles()
+            all_titles = await self.rag_engine.get_all_book_titles() # (V32 OK)
             if not all_titles:
                 return "ขออภัยครับ ตอนนี้ยังไม่มีข้อมูลหนังสือในระบบให้แนะนำครับ"
 
-            api_key = self.key_manager.get_key()
-            if not api_key:
-                return "ขออภัยครับ ระบบแนะนำหนังสือไม่พร้อมใช้งานชั่วคราว"
-
             try:
-                client = Groq(api_key=api_key)
                 prompt = self.recommendation_prompt_template.format(
                     query=query,
                     book_titles="\n- ".join(all_titles)
                 )
                 
-                chat_completion = client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt}],
-                    model=self.model_name,
-                )
-                return chat_completion.choices[0].message.content.strip()
+                return await self._call_llm_async(prompt)
 
             except Exception as e:
-                print(f"❌ LibrarianAgent LLM Error: {e}")
+                print(f"❌ LibrarianAgent final attempt failed: {e}")
                 return "ขออภัยครับ เกิดข้อผิดพลาดระหว่างการค้นหาหนังสือแนะนำ"
 
         return None

@@ -1,25 +1,58 @@
 # agents/utility_mode/image_agent.py
-# (V5 - The Intelligent Curator)
+# (V36.0 - Async & CORRECTED Groq Fix)
 
-import requests
+import httpx  
 import json
 import random
 from typing import Optional, Dict
-from groq import Groq
+from groq import AsyncGroq  
+import asyncio  
 
 class ImageAgent:
     def __init__(self, unsplash_key: str, key_manager, model_name: str):
         """
-        เริ่มต้นการทำงานโดยรับทรัพยากรที่จำเป็นทั้งหมดเข้ามา
+        [V36] เริ่มต้นการทำงาน (แบบ Async ที่ถูกต้อง)
         """
         self.unsplash_key = unsplash_key
         self.groq_key_manager = key_manager
         self.model_name = model_name
         self.api_url = "https://api.unsplash.com/search/photos"
-        print("🖼️  Image Agent (V5.2 - The Simple Curator) is ready.")
+        
+        self.http_client = httpx.AsyncClient(timeout=10.0) 
+        
+        print("🖼️  Image Agent (V36.0 - Async Curator) is ready.")
 
-    def _extract_search_parameters(self, query: str) -> Optional[Dict]:
-        print(f"  - 🧠 [Image Agent] Performing deep analysis on: '{query}'")
+    async def _call_llm_async(self, prompt: str) -> Optional[Dict]:
+        
+        api_key = await self.groq_key_manager.get_key()
+        if not api_key: raise Exception("No available Groq API keys.")
+        
+        try:
+            client = AsyncGroq(api_key=api_key)
+            
+            chat_completion = await client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model=self.model_name,
+                temperature=0.1
+            )
+            llm_response = chat_completion.choices[0].message.content
+            cleaned_response = llm_response.strip().replace("```json", "").replace("```", "")
+            params = json.loads(cleaned_response)
+            return params
+        
+        except Exception as e:
+            print(f"❌ ImageAgent LLM Error: {e}")
+            if api_key: self.groq_key_manager.report_failure(api_key)
+            
+            if api_key and ("429" in str(e).lower() or "service_unavailable" in str(e).lower()):
+                print(" 	 -> Retrying _call_llm_async...")
+                await asyncio.sleep(1)
+                return await self._call_llm_async(prompt) 
+            
+            return None 
+            
+    async def _extract_search_parameters(self, query: str) -> Optional[Dict]:
+        print(f" 	- 🧠 [Image Agent V36] Performing deep analysis on: '{query}' (Async)")
         prompt = f"""
 คุณคือ AI ที่มีหน้าที่แปลงคำขอรูปภาพให้เป็น JSON object เท่านั้น
 
@@ -44,29 +77,21 @@ class ImageAgent:
 **ผลลัพธ์:**
 """
         try:
-            api_key = self.groq_key_manager.get_key()
-            if not api_key:
-                raise Exception("No available Groq API keys.")
-
-            client = Groq(api_key=api_key)
-            chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=self.model_name,
-                temperature=0.1
-            )
-            llm_response = chat_completion.choices[0].message.content
-            cleaned_response = llm_response.strip().replace("```json", "").replace("```", "")
-            params = json.loads(cleaned_response)
+            params = await self._call_llm_async(prompt) 
             
-            print(f"  - ✅ Extracted search parameters: {params}")
-            return params
+            if params:
+                print(f" 	- ✅ Extracted search parameters: {params}")
+                return params
+            else:
+                raise ValueError("LLM returned no valid JSON params.")
+                
         except Exception as e:
-            print(f"  - ⚠️ Parameter extraction failed: {e}")
+            print(f" 	- ⚠️ Parameter extraction failed: {e}")
             return None
 
-    def _search(self, search_params: Dict) -> Optional[Dict]:
+    async def _search(self, search_params: Dict) -> Optional[Dict]:
         """
-        [UPGRADE] ฟังก์ชันค้นหาที่ใช้พารามิเตอร์หลากหลายและมีการสุ่มเลือก
+        [V23] ฟังก์ชันค้นหาที่ใช้ 'httpx' (Async)
         """
         if not self.unsplash_key:
             print("❌ [Image Agent] Error: UNSPLASH_ACCESS_KEY is not configured.")
@@ -77,10 +102,8 @@ class ImageAgent:
             term = f"{search_params['style']} {term}"
 
         params = {
-            'query': term,
-            'per_page': 20,
-            'orientation': 'landscape',
-            'lang': 'en'
+            'query': term, 'per_page': 20,
+            'orientation': 'landscape', 'lang': 'en'
         }
         if search_params.get('color'):
             params['color'] = search_params['color']
@@ -88,8 +111,10 @@ class ImageAgent:
         headers = {'Authorization': f'Client-ID {self.unsplash_key}'}
 
         try:
-            print(f"🖼️  [Image Agent] Searching for '{term}' on Unsplash with params: {params}...")
-            response = requests.get(self.api_url, headers=headers, params=params, timeout=10)
+            print(f"🖼️  [Image Agent V36] Searching Unsplash (Async) for: '{term}'...")
+            
+            response = await self.http_client.get(self.api_url, headers=headers, params=params)
+            
             response.raise_for_status()
             data = response.json()
 
@@ -112,12 +137,13 @@ class ImageAgent:
             print(f"❌ [Image Agent] An unexpected error occurred during search: {e}")
             return None
 
-    def handle(self, query: str) -> Optional[Dict]:
-        search_params = self._extract_search_parameters(query)
+    async def handle(self, query: str) -> Optional[Dict]:
+        search_params = await self._extract_search_parameters(query) 
         
         if search_params and search_params.get('search_term'):
-            return self._search(search_params)
+            return await self._search(search_params) 
         
-        print("  - 🟡 Fallback: Could not extract structured parameters. Using simple keyword extraction.")
+        print(" 	- 🟡 Fallback: Could not extract structured parameters. Using simple keyword extraction.")
         simple_term = query.replace("หารูปภาพ", "").replace("หารูป", "").replace("รูปภาพของ", "").strip()
-        return self._search({"search_term": simple_term})
+        
+        return await self._search({"search_term": simple_term}) 

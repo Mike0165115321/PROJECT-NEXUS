@@ -1,36 +1,32 @@
 # core/tts_engine.py
-# (V_Final - Switched to the simple and reliable gTTS)
+# (V49.0 - Robust & Non-Blocking gTTS)
 
 import os
 import re
 from typing import Optional
 from gtts import gTTS
+import asyncio 
+import time   
 
 class TextToSpeechEngine:
     """
-    ผู้เชี่ยวชาญด้านการสังเคราะห์เสียงโดยใช้ gTTS (Google Text-to-Speech)
-    - เรียบง่าย, เสถียร, และไม่ต้องใช้ Dependency ที่ซับซ้อน
+    [V49] ผู้เชี่ยวชาญด้านการสังเคราะห์เสียง (แบบ Async & Robust)
     """
     def __init__(self):
-        print("🗣️  Initializing Text-to-Speech Engine (gTTS)...")
-        # gTTS ไม่ต้องมีการโหลดโมเดลใดๆ พร้อมใช้งานเสมอ
+        print("🗣️  Initializing Text-to-Speech Engine (gTTS V49 - Robust)...") 
         self.is_ready = True
         print("✅ Text-to-Speech Engine (gTTS) is ready.")
 
     def _cleanup_text(self, text: str) -> str:
-        """
-        ทำความสะอาดข้อความก่อนส่งให้ TTS (ยังคงมีประโยชน์)
-        """
         text = re.sub(r'[\*#`]', '', text)
         text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', text)
-        # ลบ URL ออกไปก่อนส่งให้ gTTS
         text = re.sub(r'https?://\S+', '', text)
         text = re.sub(r'\s+', ' ', text).strip()
         return text
 
-    def synthesize(self, text: str, output_path: str = "temp_voice.mp3") -> Optional[str]:
+    async def synthesize(self, text: str, output_path: str = "temp_voice.mp3") -> Optional[str]:
         """
-        สังเคราะห์เสียงพูดเป็นไฟล์ .mp3 โดยใช้ gTTS
+        [V33] สังเคราะห์เสียงพูด (แบบ Async) โดยรัน gTTS ในเธรดแยก
         """
         if not self.is_ready or not text:
             return None
@@ -39,18 +35,27 @@ class TextToSpeechEngine:
         if not cleaned_text:
             return None
 
-        print(f"🗣️  [gTTS Engine] Synthesizing: '{cleaned_text[:50]}...'")
+        print(f"🗣️  [gTTS Engine V49] Synthesizing: '{cleaned_text[:50]}...' (Async)")
 
-        try:
-            # 1. สร้าง Object gTTS โดยระบุข้อความและภาษา (th = ภาษาไทย)
-            tts = gTTS(text=cleaned_text, lang='th')
-            
-            # 2. บันทึกไฟล์เสียงเป็น .mp3
-            tts.save(output_path)
-            
-            print(f"  - ✅ Audio file created successfully at: {output_path}")
-            return output_path
+        def _blocking_gtts_save():
+            """[V49] ฟังก์ชันนี้จะถูกรันในเธรดแยก (พร้อม "ตรวจสอบ" ไฟล์)"""
+            try:
+                tts = gTTS(text=cleaned_text, lang='th')
+                tts.save(output_path)
+                
+                time.sleep(0.1) 
+                
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 1024: 
+                    print(f" 	- ✅ Audio file created successfully at: {output_path} (Size: {os.path.getsize(output_path)} bytes)")
+                    return output_path
+                else:
+                    print(f" 	- ❌ gTTS Silently Failed. File is 0 bytes or missing.")
+                    if os.path.exists(output_path):
+                        os.remove(output_path)
+                    return None
 
-        except Exception as e:
-            print(f"  - ❌ gTTS Synthesis failed: {e}")
-            return None
+            except Exception as e:
+                print(f" 	- ❌ gTTS Synthesis failed (Exception): {e}")
+                return None
+        
+        return await asyncio.to_thread(_blocking_gtts_save)

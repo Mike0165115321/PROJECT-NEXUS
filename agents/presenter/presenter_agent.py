@@ -1,27 +1,23 @@
 # agents/presenter_mode/presenter_agent.py
+# (V39.0 - Async & CORRECTED Groq Fix)
 
 from typing import Dict, List, Any
-from groq import Groq
+from groq import AsyncGroq  
+import asyncio  
 
 class PresenterAgent:
     """
-    Agent ที่รับผิดชอบการแนะนำตัวเองโดยเฉพาะสำหรับโปรเจกต์ NEXUS
-    โดยใช้ LLM สร้างบทพูดที่สอดคล้องกับบุคลิกหลักของ 'ฟางซิน'
+    [V39] Agent ที่รับผิดชอบการแนะนำตัวเอง (แบบ Async ที่ถูกต้อง)
     """
 
     def __init__(self, key_manager: Any, model_name: str, persona_prompt: str):
         """
-        ตั้งค่า Agent สำหรับการแนะนำตัว
-
-        Args:
-            key_manager (Any): อ็อบเจกต์สำหรับจัดการ API keys (เช่น GroqKeyManager)
-            model_name (str): ชื่อโมเดล LLM ที่จะใช้
-            persona_prompt (str): Prompt บุคลิกภาพหลักของ 'ฟางซิน'
+        [V39] ตั้งค่า Agent สำหรับการแนะนำตัว
         """
         self.key_manager = key_manager
         self.model_name = model_name
         
-        # สร้าง Prompt เฉพาะสำหรับ Agent นี้ โดยต่อยอดจาก Persona หลัก
+        
         self.presentation_prompt = persona_prompt + """
 **ภารกิจเฉพาะหน้า: แนะนำตัวเองในงานนำเสนอ**
 
@@ -37,33 +33,48 @@ class PresenterAgent:
 **ย้ำเตือน:** ต้องปฏิบัติตาม "กฎเหล็กแห่งตัวตน" อย่างเคร่งครัด ห้ามหลุดบทบาทเด็ดขาด
 **บทพูดของฟางซิน:**
 """
-        print("🎤 Presenter Agent (V2 - LLM Powered) is ready.")
+        print("🎤 Presenter Agent (V39 - Async LLM Powered) is ready.")
 
-    def handle(self, query: str, short_term_memory: List[Dict[str, Any]]) -> str:
-        """
-        เมธอดหลักในการทำงานของ Agent นี้ จะสร้างและส่งคืนบทพูดแนะนำตัว
-        ที่สร้างโดย LLM ตาม Prompt ที่เตรียมไว้
-        """
-        print("🎬 [Presenter Agent] Generating introduction script using LLM...")
+    async def _call_llm_async(self, prompt: str) -> str:
         
-        api_key = self.key_manager.get_key()
-        if not api_key:
-            return "ขออภัยค่ะ ตอนนี้ฟางซินยังไม่พร้อมจะพูดคุยในตอนนี้"
-
+        api_key = await self.key_manager.get_key()
+        if not api_key: raise Exception("No available Groq API keys.")
+        
         try:
-            client = Groq(api_key=api_key)
+            client = AsyncGroq(api_key=api_key)
             
-            chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": self.presentation_prompt}],
+            chat_completion = await client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
                 model=self.model_name,
-                temperature=0.7 # เพิ่มความสร้างสรรค์เล็กน้อย
+                temperature=0.7 
             )
+            return chat_completion.choices[0].message.content.strip()
+        
+        except Exception as e:
+            print(f"❌ PresenterAgent LLM Error: {e}")
+            if api_key: self.key_manager.report_failure(api_key) 
             
-            response = chat_completion.choices[0].message.content.strip()
+            if api_key and ("429" in str(e).lower() or "service_unavailable" in str(e).lower()):
+                print(" 	 -> Retrying _call_llm_async...")
+                await asyncio.sleep(1)
+                return await self._call_llm_async(prompt) 
+            
+            raise e 
+
+
+    async def handle(self, query: str, short_term_memory: List[Dict[str, Any]]) -> str:
+        """
+        [V24] เมธอดหลักในการทำงานของ Agent นี้ (แบบ Async)
+        """
+        print("🎬 [Presenter Agent V39] Generating introduction script (Async)...")
+        
+        
+        try:
+            response = await self._call_llm_async(self.presentation_prompt)
+            
             print("✅ [Presenter Agent] Introduction script generated successfully.")
             return response
             
         except Exception as e:
             print(f"❌ PresenterAgent LLM Error: {e}")
-            if api_key: self.key_manager.report_failure(api_key)
             return "ขออภัยค่ะ เกิดข้อผิดพลาดบางอย่าง ทำให้ฟางซินยังแนะนำตัวไม่ได้ในตอนนี้"

@@ -1,9 +1,10 @@
 # agents/feng_mode/proactive_offer_agent.py
-# (V4 - KGRAG Powered Igniting Sage)
+# (V41.0 - Async & CORRECTED AttributeFix)
 
 import json
 from typing import Dict, Any, List
-from groq import Groq
+from groq import AsyncGroq  
+import asyncio  
 
 class ProactiveOfferAgent:
     
@@ -40,47 +41,61 @@ class ProactiveOfferAgent:
 **Input ของผู้ใช้:** "{query}"
 **คำตอบของเฟิง (ตามโครงสร้างข้างต้นเท่านั้น):**
 """
-        print("🤔 Proactive Offer Agent (V4 - KGRAG Powered) is ready.")
+        print("🤔 Proactive Offer Agent (V41 - Async & Fixed) is ready.") 
 
-    def _get_intuitive_context(self, query: str) -> str:
+    async def _get_intuitive_context(self, query: str) -> str:
         """
-        ใช้ KGRAGEngine (ผ่าน RAGEngine) เพื่อดึง "สัญชาตญาณ" สำหรับการเสนอการวิเคราะห์ต่อ
+        [V13] ใช้ KGRAGEngine (ผ่าน RAGEngine) แบบ Async
         """
-        print(f"  - 🕸️  Searching KG--RAG for proactive offer about: '{query}'")
+        print(f" 	- 🕸️  Searching KG-RAG (Async) for proactive offer about: '{query}'")
         if not self.rag_engine:
             return "ไม่มี"
         
-        results = self.rag_engine.search_graph(query, top_k=1)
+        results = await self.rag_engine.search_graph(query, top_k=5) 
         
         if not results:
             return "ไม่มี"
             
-        item = results[0]
-        context = f"- '{item.get('name')}': {item.get('description', '')}"
-        return context
-    def handle(self, query: str) -> Dict[str, Any]:
-        print(f"🤔 [Proactive Offer Agent] Handling: '{query[:40]}...'")
-        try:
-            api_key = self.key_manager.get_key()
-            if not api_key:
-                raise ValueError("No available API keys for ProactiveOfferAgent.")
+        contexts = [f"- '{item.get('name')}': {item.get('description', '')}" for item in results]
+        return "\n".join(contexts)
 
-            client = Groq(api_key=api_key)
+
+    async def handle(self, query: str) -> Dict[str, Any]:
+        print(f"🤔 [Proactive Offer Agent V41] Handling: '{query[:40]}...' (Async)")
+        
+        api_key = await self.key_manager.get_key() 
+        
+        if not api_key:
+            return self._fallback_answer(query, "No available API keys")
+        try:
+            client = AsyncGroq(api_key=api_key)
             
-            intuitive_context = self._get_intuitive_context(query)
+            intuitive_context = await self._get_intuitive_context(query)
             
             prompt = self.proactive_offer_prompt.format(
                 intuitive_context=intuitive_context, 
                 query=query
             )
             
-            chat_completion = client.chat.com.pletions.create(
+            chat_completion = await client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}], model=self.model_name
             )
             proactive_answer = chat_completion.choices[0].message.content.strip()
             
             return {"type": "proactive_offer", "content": proactive_answer, "original_query": query}
+        
         except Exception as e:
             print(f"❌ ProactiveOfferAgent Error: {e}")
-            fallback_answer = f"ผมเข้าใจว่าคุณสนใจเรื่อง '{query}' ครับ แต่ในขณะนี้ผมยังไม่สามารถให้ข้อมูลเบื้องต้นได้ คุณต้องการให้ผมลองวิเคราะห์หัวข้อนี้แบบเจาะลึกจากคลังความรู้ทั้งหมดเลยไหมครับ?"
-            return {"type": "proactive_offer", "content": fallback_answer, "original_query": query}
+            if api_key: self.key_manager.report_failure(api_key) 
+            
+            if api_key and ("429" in str(e).lower() or "service_unavailable" in str(e).lower()):
+                print(" 	 -> Retrying with a new key...")
+                await asyncio.sleep(1)
+                return await self.handle(query) 
+
+            return self._fallback_answer(query, str(e))
+
+    def _fallback_answer(self, query: str, error_msg: str) -> Dict[str, Any]:
+        print(f" 	 -> ProactiveOfferAgent falling back due to: {error_msg}")
+        fallback_answer = f"ผมเข้าใจว่าคุณสนใจเรื่อง '{query}' ครับ แต่ในขณะนี้ผมยังไม่สามารถให้ข้อมูลเบื้องต้นได้ คุณต้องการให้ผมลองวิเคราะห์หัวข้อนี้แบบเจาะลึกจากคลังความรู้ทั้งหมดเลยไหมครับ?"
+        return {"type": "proactive_offer", "content": fallback_answer, "original_query": query}
