@@ -13,37 +13,36 @@ from contextlib import asynccontextmanager
 from sentence_transformers import SentenceTransformer, CrossEncoder
 import torch
 import time
-import asyncio # <-- [V30] (ถูกต้อง)
+import asyncio
 from datetime import datetime, timedelta
 
-# --- ส่วนของ Core (V25-V47 Fix) ---
 from core.config import settings
 from core.dispatcher import Dispatcher, FinalResponse
-from core.rag_engine import RAGEngine # (V32)
-from core.memory_manager import MemoryManager # (V17)
-from core.long_term_memory_manager import LongTermMemoryManager # (V34)
-from core.api_key_manager import ApiKeyManager # (V25)
-from core.graph_manager import GraphManager # (V2.1 - Sync OK!)
-from core.groq_key_manager import GroqApiKeyManager # (V25)
-from core.tts_engine import TextToSpeechEngine # (V33)
-# --- ส่วนของ Agents (V11-V46) ---
-from agents.planning_mode.planner_agent import PlannerAgent # (V9)
-from agents.formatter_agent import FormatterAgent # (V10)
-from agents.consultant_mode.librarian_agent import LibrarianAgent # (V43)
-from agents.coder_mode.code_interpreter_agent import CodeInterpreterAgent # (V45)
+from core.rag_engine import RAGEngine 
+from core.memory_manager import MemoryManager 
+from core.long_term_memory_manager import LongTermMemoryManager 
+from core.api_key_manager import ApiKeyManager 
+from core.graph_manager import GraphManager
+from core.groq_key_manager import GroqApiKeyManager 
+from core.tts_engine import TextToSpeechEngine 
+
+from agents.planning_mode.planner_agent import PlannerAgent 
+from agents.formatter_agent import FormatterAgent 
+from agents.consultant_mode.librarian_agent import LibrarianAgent 
+from agents.coder_mode.code_interpreter_agent import CodeInterpreterAgent 
 from agents.utility_mode.reporter_agent import ReporterAgent
-from agents.utility_mode.system_agent import SystemAgent # (V22)
-from agents.utility_mode.image_agent import ImageAgent # (V36)
-from agents.news_mode.news_agent import NewsAgent # (V11)
-from agents.feng_mode.feng_agent import FengAgent # (V37)
-from agents.counseling_mode.counselor_agent import CounselorAgent # (V14)
-from agents.storytelling_mode.listener_agent import ListenerAgent # (V38)
-from agents.apology_agent.apology_agent import ApologyAgent # (V46)
-from agents.feng_mode.general_conversation_agent import GeneralConversationAgent # (V42)
-from agents.feng_mode.proactive_offer_agent import ProactiveOfferAgent # (V41)
-from agents.memory_mode.memory_agent import MemoryAgent # (V40)
+from agents.utility_mode.system_agent import SystemAgent 
+from agents.utility_mode.image_agent import ImageAgent 
+from agents.news_mode.news_agent import NewsAgent 
+from agents.feng_mode.feng_agent import FengAgent 
+from agents.counseling_mode.counselor_agent import CounselorAgent 
+from agents.storytelling_mode.listener_agent import ListenerAgent 
+from agents.apology_agent.apology_agent import ApologyAgent 
+from agents.feng_mode.general_conversation_agent import GeneralConversationAgent 
+from agents.feng_mode.proactive_offer_agent import ProactiveOfferAgent 
+from agents.memory_mode.memory_agent import MemoryAgent 
 from agents.persona_core import FENG_PERSONA_PROMPT
-from agents.presenter.presenter_agent import PresenterAgent # (V39)
+from agents.presenter.presenter_agent import PresenterAgent 
 
 
 web_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
@@ -53,9 +52,7 @@ GRAPH_MANAGER: GraphManager = None
 DISPATCHER: Dispatcher = None
 audio_tasks = {}
 
-# [V33] (ฟังก์ชัน create_audio_file_background "แข็งแรงดี")
 async def create_audio_file_background(text: str, output_path: str, task_id: str):
-    """[V33] ฟังก์ชันนี้จะถูกรันใน Background เพื่อสร้างไฟล์เสียง (แบบ Async)"""
     try:
         print(f"🎙️  Starting background audio synthesis for task: {task_id}")
         tts_agent = AGENTS.get("TTS")
@@ -70,9 +67,7 @@ async def create_audio_file_background(text: str, output_path: str, task_id: str
         print(f" 	- ❌ Background audio synthesis failed for task {task_id}: {e}")
         audio_tasks[task_id] = {"status": "failed", "error": str(e)}
 
-# [V3.2] (ฟังก์ชัน cleanup_old_audio_files "แข็งแรงดี")
 async def cleanup_old_audio_files():
-    """Service ที่ทำงานเบื้องหลังเพื่อลบไฟล์เสียงเก่า"""
     audio_dir = os.path.join(web_dir, "static", "audio")
     cleanup_interval_seconds = 300  
     max_file_age_minutes = 5 	 
@@ -99,24 +94,20 @@ async def cleanup_old_audio_files():
             print(f" 	- Error during audio cleanup: {e}")
 
 
-# [CHANGED] "ผ่าตัดใหญ่ V47.0": Non-Blocking Startup (CORRECTED)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """[V47] "Lifespan" ที่ "ผ่าตัด" แล้ว (Non-Blocking Startup ที่ "ถูกต้อง")"""
     
     global DISPATCHER, GRAPH_MANAGER, AGENTS
-    print("--- 🚀 Initializing Project Nexus Server (V47 - Async & Corrected) ---") # [CHANGED] 1. อัปเดตเวอร์ชัน
+    print("--- 🚀 Initializing Project Nexus Server (V47 - Async & Corrected) ---") 
     try:
-        # --- [STEP 1: สร้าง Key Managers (เร็ว) (V25)] ---
         google_key_manager = ApiKeyManager(all_google_keys=settings.GOOGLE_API_KEYS, silent=True)
         groq_key_manager = GroqApiKeyManager(all_groq_keys=settings.GROQ_API_KEYS, silent=True)
         
-        # --- [STEP 2: สร้าง Models (FP16) (ช้า... แต่เดี๋ยว 'await' ทีหลัง)] ---
         device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"--- 🧠 Initializing Central Armory on {device.upper()} (Optimized FP16 Mode) ---")
         
         def _blocking_load_hf_models():
-            embedder = SentenceTransformer("intfloat/multilingual-e5-large", device=device)
+            embedder = SentenceTransformer("BAAI/bge-m3", device=device)
             reranker = CrossEncoder("BAAI/bge-reranker-base", device=device)
             if device == "cuda":
                 print(" 	- ⚡️ Converting models to FP16 for CUDA acceleration...")
@@ -127,7 +118,6 @@ async def lifespan(app: FastAPI):
         
         hf_models_task = asyncio.create_task(asyncio.to_thread(_blocking_load_hf_models))
 
-        # --- [STEP 3: สร้าง 'Core' Agents (เร็ว)] ---
         rag_engine_instance = RAGEngine(
             embedder=None, 
             reranker=None, 
@@ -139,8 +129,6 @@ async def lifespan(app: FastAPI):
             index_dir="data/memory_index"
         )
         
-        # --- [STEP 4: สร้าง 'All Agents' (เร็ว)] ---
-        # (นี่คือการ 'Inject' Dependencies (V9-V47 Fixes) ทั้งหมด)
         AGENTS = {
             "MEMORY": memory_manager_instance,
             "SYSTEM": SystemAgent(), # (V22)
@@ -225,26 +213,16 @@ async def lifespan(app: FastAPI):
             )
         }
 
-        # --- [STEP 5: "Await" ทุกอย่างที่ "ช้า" ให้เสร็จ "พร้อมกัน"] ---
         print("--- ⏳ Awaiting all non-blocking background loads... ---")
         
-        # 5.1 "รอ" ให้ HF Models (FP16) โหลดเสร็จ
         embedder_instance, reranker_instance = await hf_models_task
         
-        # 5.2 "Inject" Models ที่โหลดเสร็จแล้ว... กลับเข้าไปใน RAG Engine
         rag_engine_instance.embedder = embedder_instance
         rag_engine_instance.reranker = reranker_instance
         
-        # 5.3 "ปลุก" Graph Manager (V2.1 - Sync)
         global GRAPH_MANAGER
-        GRAPH_MANAGER = GraphManager() # (V2.1 init เร็ว)
+        GRAPH_MANAGER = GraphManager() 
         
-        # [CHANGED V47.0] "ผ่าตัด" การเรียก 'gather'
-        # (เรา "ไม่" เรียก 'GRAPH_MANAGER.verify_connection_async()' (V29)
-        #  ...แต่เรา "ห่อ" 'GRAPH_MANAGER.verify_connectivity()' (V2.1)
-        #  ...ด้วย 'asyncio.to_thread' แทน!)
-        
-        # 5.4 สร้าง "ฟังก์ชันห่อ" (Wrapper) สำหรับ 'verify_connectivity' (V2.1)
         def _blocking_verify_neo4j():
             if GRAPH_MANAGER and GRAPH_MANAGER.driver:
                 try:
@@ -253,18 +231,16 @@ async def lifespan(app: FastAPI):
                     print("🔗 Graph Manager: Successfully connected to Neo4j.")
                 except Exception as e:
                     print(f"❌ Graph Manager: Could not connect to Neo4j. Error: {e}")
-                    GRAPH_MANAGER.driver = None # ปิดการใช้งาน
+                    GRAPH_MANAGER.driver = None 
         
-        # 5.5 สั่ง "โหลด" (Async) คลังข้อมูล + "Verify" DB "พร้อมกัน"
         await asyncio.gather(
-            rag_engine_instance.load_models_and_index(),      # (V32 - OK)
-            ltm_manager_instance.load_models_and_index(),   # (V34 - OK)
-            asyncio.to_thread(_blocking_verify_neo4j)         # <-- [V47 FIX!]
+            rag_engine_instance.load_models_and_index(),    
+            ltm_manager_instance.load_models_and_index(),  
+            asyncio.to_thread(_blocking_verify_neo4j)       
         )
         
-        # --- [STEP 6: สร้าง Dispatcher (เร็ว)] ---
         asyncio.create_task(cleanup_old_audio_files())
-        DISPATCHER = Dispatcher(agents=AGENTS, key_manager=google_key_manager) # (V9)
+        DISPATCHER = Dispatcher(agents=AGENTS, key_manager=google_key_manager)
         
         print("✅ All systems operational. Hybrid AI team is ready.")
     
@@ -280,7 +256,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Project Nexus AI Assistant",
-    version="V47.0-AsyncFixed", # [CHANGED] อัปเดตเวอร์ชัน!
+    version="V47.0-AsyncFixed", 
     lifespan=lifespan
 )
 
@@ -325,7 +301,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
                     
                     audio_tasks[task_id] = {"status": "processing"}
                     
-                    asyncio.create_task(create_audio_file_background(response_model.answer, output_path, task_id)) # (V33 - OK)
+                    asyncio.create_task(create_audio_file_background(response_model.answer, output_path, task_id))
                     
                     response_model.voice_task_id = task_id
                 
@@ -361,7 +337,6 @@ async def ask_assistant(request: QueryRequest, background_tasks: BackgroundTasks
             
             audio_tasks[task_id] = {"status": "processing"}
             
-            # [V33 FIX] (ถูกต้อง)
             asyncio.create_task(create_audio_file_background(response.answer, output_path, task_id))
             
             response.voice_task_id = task_id
@@ -384,7 +359,6 @@ async def get_audio_status(task_id: str):
         
     return task
 
-# [CHANGED V30/V47] "ผ่าตัด" Endpoint นี้ให้เป็น 'async'
 @app.get("/api/graph/explore", tags=["Knowledge Graph"])
 async def get_graph_data_for_visualization(entity: str, limit: int = 25):
     global GRAPH_MANAGER
@@ -393,29 +367,24 @@ async def get_graph_data_for_visualization(entity: str, limit: int = 25):
     if not entity:
         return {"nodes": [], "edges": []}
     
-    # (ฟังก์ชัน 'Blocking' ที่เราจะ 'await to_thread')
     def _blocking_graph_call():
         print(f"📈 Graph Endpoint: Executing 'find_related_concepts' (Sync) in Thread...")
         try:
-            # (เรียก 'GraphManager' (V2.1) ที่ "บล็อก")
             return GRAPH_MANAGER.find_related_concepts(entity, limit=limit)
         except Exception as e:
             print(f"❌ Graph Endpoint: Error during blocking call: {e}")
             return [{"error": str(e)}] 
 
     try:
-        # "await" การรันในเธรดแยก (ไม่บล็อก)
         relations = await asyncio.to_thread(_blocking_graph_call)
 
-        # [V34 FIX] (แก้บั๊ก 'list' object has no attribute 'count')
         if not relations or (isinstance(relations, list) and relations and relations[0].get("error")):
             error_msg = relations[0].get("error") if relations else "Unknown error"
             raise Exception(f"Graph query failed in thread: {error_msg}")
 
-        # (โค้ดสร้าง Nodes/Edges... "แข็งแรงดี")
         nodes, edges, node_ids = [], [], set()
         for rel in relations:
-            if 'source_id' not in rel or 'target_id' not in rel: continue # [NEW] กันเหนียว
+            if 'source_id' not in rel or 'target_id' not in rel: continue 
             if rel['source_id'] not in node_ids:
                 nodes.append({"id": rel['source_id'], "label": rel['source'], "group": rel['source_labels'][0] if rel.get('source_labels') else 'Unknown'})
                 node_ids.add(rel['source_id'])

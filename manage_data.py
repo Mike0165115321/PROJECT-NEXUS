@@ -1,5 +1,4 @@
-# manage_data.py
-# (V4.2 - Hotfix & Efficient RAG Architect)
+# (V4.4 - BGE-M3 Optimized & FP16 VRAM)
 
 import os
 import json
@@ -10,13 +9,21 @@ import re
 import shutil
 from typing import List, Dict, Set
 from collections import defaultdict
+import numpy as np 
 
 class RAGBuilder:
-    def __init__(self, model_name="intfloat/multilingual-e5-large"):
+    def __init__(self, model_name="BAAI/bge-m3"):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"⚙️  RAG Builder is initializing on device: {device.upper()}")
+        
         self.model = SentenceTransformer(model_name, device=device)
-        print(f"✅ Embedding model '{model_name}' loaded successfully.")
+        
+        if device == "cuda":
+            print("  - ⚡️ Converting Embedding model to FP16 for VRAM efficiency...")
+            self.model.half()
+
+        print(f"✅ Embedding model '{model_name}' loaded successfully (FP16: {device=='cuda'}).")
+
 
     def _sanitize_name(self, name: str) -> str:
         name = re.sub(r'\s+', ' ', name)
@@ -77,7 +84,7 @@ class RAGBuilder:
             context_str = ", ".join(context_parts)
             
             embedding_text = f"{context_str}: {content}"
-            texts_to_embed.append("query: " + embedding_text)
+            texts_to_embed.append(embedding_text)
             
             item['embedding_text'] = embedding_text
             mapping_data.append(item)
@@ -94,7 +101,9 @@ class RAGBuilder:
             show_progress_bar=True
         ).astype("float32")
         
-        index = faiss.IndexFlatL2(embeddings.shape[1])
+        faiss.normalize_L2(embeddings)
+        
+        index = faiss.IndexFlatIP(embeddings.shape[1])
         index.add(embeddings)
         
         faiss.write_index(index, os.path.join(category_folder, "faiss.index"))
@@ -114,7 +123,7 @@ if __name__ == "__main__":
     os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
     print("\n" + "="*60)
-    print("--- 🛠️  Starting RAG Knowledge Base Construction  🛠️ ---")
+    print("--- 🛠️  Starting RAG Knowledge Base Construction (BGE-M3 / FP16) 🛠️ ---")
     print("="*60)
 
     builder = RAGBuilder()

@@ -1,5 +1,4 @@
-# manage_kg_data.py
-# (V1.2 - Integrated with GraphManager for robustness)
+# (V1.3 - BGE-M3 Optimized)
 
 import os
 import json
@@ -8,9 +7,10 @@ from sentence_transformers import SentenceTransformer
 import torch
 from typing import List, Dict
 from core.graph_manager import GraphManager
+import numpy as np # เพิ่ม numpy
 
 class KGIndexBuilder:
-    def __init__(self, model_name="intfloat/multilingual-e5-large"):
+    def __init__(self, model_name="BAAI/bge-m3"):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"⚙️  KG Index Builder is initializing on device: {device.upper()}")
         self.model = SentenceTransformer(model_name, device=device)
@@ -22,9 +22,6 @@ class KGIndexBuilder:
         self.graph_manager.close()
 
     def fetch_all_concepts(self) -> List[Dict]:
-        """
-        ใช้ GraphManager เพื่อดึงข้อมูล Node ทั้งหมดที่เราต้องการจะทำ Index
-        """
         if not self.graph_manager.driver:
             print("❌ Cannot fetch concepts, GraphManager is not connected.")
             return []
@@ -61,7 +58,8 @@ class KGIndexBuilder:
             label_str = labels[0] if labels else "ข้อมูล"
             
             embedding_text = f"{label_str}เรื่อง '{name}': {description}"
-            texts_to_embed.append("query: " + embedding_text)
+            # [V1.3] Removed "query: " prefix for BGE-M3
+            texts_to_embed.append(embedding_text)
             
             map_item = item.copy()
             map_item['embedding_text'] = embedding_text
@@ -74,7 +72,11 @@ class KGIndexBuilder:
             show_progress_bar=True
         ).astype("float32")
         
-        index = faiss.IndexFlatL2(embeddings.shape[1])
+        # [V1.3] Normalize embeddings for Cosine Similarity (best for BGE-M3)
+        faiss.normalize_L2(embeddings)
+
+        # [V1.3] Use Inner Product (IP) index which equals Cosine Similarity after normalization
+        index = faiss.IndexFlatIP(embeddings.shape[1])
         index.add(embeddings)
         
         faiss.write_index(index, os.path.join(index_folder, "graph_faiss.index"))
@@ -90,7 +92,7 @@ if __name__ == "__main__":
     INDEX_FOLDER = "data/graph_index"
 
     print("\n" + "="*60)
-    print("--- 🛠️  Starting KG-RAG Vector Base Construction  🛠️ ---")
+    print("--- 🛠️  Starting KG-RAG Vector Base Construction (BGE-M3) 🛠️ ---")
     print("="*60)
 
     builder = KGIndexBuilder()

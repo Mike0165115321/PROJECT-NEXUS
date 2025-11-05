@@ -1,5 +1,4 @@
-# core/long_term_memory_manager.py
-# (V34.0 - The CORRECT Async Searcher: Non-Blocking Startup)
+# (V35.0 - BGE-M3 Ready: Prefix Removed, Normalization Added, Stable Load)
 
 import faiss
 import json
@@ -7,7 +6,8 @@ import os
 import torch
 from sentence_transformers import SentenceTransformer
 from typing import List, Dict
-import asyncio  
+import asyncio 
+import numpy as np 
 
 class LongTermMemoryManager:
     def __init__(self, embedding_model: str, index_dir: str):
@@ -22,20 +22,24 @@ class LongTermMemoryManager:
         self.mapping: List[Dict] = []
         
         
-        print("🏛️  Long Term Memory Manager (V34 - Awaiting Load) is ready.")
+        print("🏛️  Long Term Memory Manager (V35 - Awaiting Load) is ready.")
 
     async def load_models_and_index(self):
-        """[V34] โหลดโมเดลและ Index (แบบ Async) เพื่อไม่ให้บล็อก 'lifespan'"""
+        """[V35] โหลดโมเดลและ Index (แบบ Async) และ VRAM เสถียร"""
         
         print(f"⚙️  LTM Search Embedder is initializing (Async)...")
         
         def _blocking_load_embedder():
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            print(f" 	- LTM Embedder loading on device: {device.upper()}")
-            embedder = SentenceTransformer(self.embedding_model_name, device=device)
+            print(f"    - LTM Embedder loading on CPU first...")
+            embedder = SentenceTransformer(self.embedding_model_name, device="cpu")
+            
             if device == "cuda":
-                print(" 	- ⚡️ Converting LTM Embedder to FP16...")
-                embedder.half() 
+                print("    - ⚡️ Converting LTM Embedder to FP16 (on CPU)...")
+                embedder.half()
+                print("    - ⚡️ Moving FP16 LTM Embedder to CUDA...")
+                embedder.to(device)
+            print(f"    - ✅ LTM Embedder loaded successfully (FP16: {device=='cuda'}).")
             return embedder
         
         try:
@@ -76,16 +80,16 @@ class LongTermMemoryManager:
         await self.load_models_and_index() 
 
     def search_relevant_memories(self, query: str, k: int = 2) -> List[Dict]:
-        """[V31] ค้นหาความทรงจำ (แบบ Sync/Blocking)
-           (ถูกออกแบบมาให้ถูกเรียกด้วย asyncio.to_thread จากภายนอก)
-        """
         if self.index is None or not self.mapping or self.embedder is None: 
             print("🟡 LTM Searcher: Search disabled (Models not loaded).")
             return []
         
         print(f"🧠 LTM Searcher: Searching memories for '{query[:20]}...' (Sync in Thread)")
         try:
-            query_vector = self.embedder.encode(["query: " + query], convert_to_numpy=True).astype("float32")
+            query_vector = self.embedder.encode([query], convert_to_numpy=True).astype("float32")
+            
+            faiss.normalize_L2(query_vector)
+            
             _, indices = self.index.search(query_vector, k)
             
             found_memories = [self.mapping[i] for i in indices[0] if i < len(self.mapping)]

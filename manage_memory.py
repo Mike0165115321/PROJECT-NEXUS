@@ -1,5 +1,4 @@
-# manage_memory.py
-# (V12.1 - Standardized Builder Architecture, No-LLM)
+# (V12.2 - BGE-M3 Optimized & FP16 VRAM)
 
 import sqlite3
 import faiss
@@ -10,9 +9,10 @@ import time
 from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Any
 import re
+import numpy as np 
 
 class MemoryBuilder:
-    def __init__(self, model_name="intfloat/multilingual-e5-large"):
+    def __init__(self, model_name="BAAI/bge-m3"):
         self.DB_PATH = "data/memory.db"
         self.MEMORY_INDEX_DIR = "data/memory_index"
         self.MEMORY_FAISS_PATH = os.path.join(self.MEMORY_INDEX_DIR, "memory_faiss.index")
@@ -20,8 +20,14 @@ class MemoryBuilder:
         
         device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"⚙️  Memory Builder is initializing on device: {device.upper()}")
+        
         self.model = SentenceTransformer(model_name, device=device)
-        print(f"✅ Embedding model '{model_name}' loaded successfully.")
+        
+        if device == "cuda":
+            print("  - ⚡️ Converting Embedding model to FP16 for VRAM efficiency...")
+            self.model.half()
+
+        print(f"✅ Embedding model '{model_name}' loaded successfully (FP16: {device=='cuda'}).")
 
         self._ensure_db_schema()
 
@@ -58,11 +64,10 @@ class MemoryBuilder:
                 )
             """)
             conn.commit()
-            print("🗄️  LTM DB Schema (V12.3 - Archiving) is ready.")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_ltm_session_id ON long_term_memories(session_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_ch_session_id ON conversation_history(session_id)")
             conn.commit()
-            print("🗄️  LTM DB Schema (V11 - Timestamp-Aware) is ready.")
+            print("🗄️  LTM DB Schema (V12.2) is ready.")
 
     def get_unprocessed_conversation_chunks(self, num_sessions: int = 5, chunk_size: int = 20) -> List[Dict[str, Any]]:
         chunks_to_process = []
@@ -165,7 +170,7 @@ class MemoryBuilder:
                         (chunk['session_id'], chunk['end_message_id'])
                     )
                 conn.commit()
-            print(f"  - 🔄 Updated processing state for {len(chunks)} chunks.")
+                print(f"  - 🔄 Updated processing state for {len(chunks)} chunks.")
         except Exception as e:
             print(f"  - ❌ Could not update processing state: {e}")
 
@@ -181,7 +186,7 @@ class MemoryBuilder:
         mapping_data = []
         for mem in memories:
             embedding_text = f"หัวข้อ: {mem.get('title', '')}\nสรุป: {mem.get('summary', '')}"
-            texts_to_embed.append("passage: " + embedding_text)
+            texts_to_embed.append(embedding_text)
             
             mem_copy = mem.copy()
             mem_copy['embedding_text'] = embedding_text
@@ -194,6 +199,8 @@ class MemoryBuilder:
             convert_to_numpy=True
         ).astype("float32")
         
+        faiss.normalize_L2(new_embeddings)
+        
         if os.path.exists(self.MEMORY_FAISS_PATH):
             print("  -  appending to existing index...")
             index = faiss.read_index(self.MEMORY_FAISS_PATH)
@@ -202,8 +209,9 @@ class MemoryBuilder:
                 for item in mapping_data:
                     f.write(json.dumps(item, ensure_ascii=False) + "\n")
         else:
-            print("  - creating new index...")
-            index = faiss.IndexFlatL2(new_embeddings.shape[1])
+            print("  - creating new index (using IndexFlatIP for BGE-M3)...")
+            # [V12.2] Use Inner Product (IP) index for new indexes
+            index = faiss.IndexFlatIP(new_embeddings.shape[1])
             index.add(new_embeddings)
             with open(self.MEMORY_MAPPING_PATH, "w", encoding="utf-8") as f:
                 for item in mapping_data:
@@ -253,7 +261,7 @@ class MemoryBuilder:
 
 if __name__ == "__main__":
     print("\n" + "="*60)
-    print("--- 🏛️  Starting Memory Consolidation & Indexing Process  🏛️ ---")
+    print("--- 🏛️  Starting Memory Consolidation & Indexing Process (BGE-M3 / FP16) 🏛️ ---")
     print("="*60)
 
     builder = MemoryBuilder()
